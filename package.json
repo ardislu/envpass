@@ -1,6 +1,6 @@
 {
   "name": "@ardislu/envpass",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A CLI and library to encrypt your .env file using a passkey and decrypt it when needed during application execution.",
   "keywords": [
     "env",
