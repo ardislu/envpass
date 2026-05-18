@@ -1,0 +1,70 @@
+{
+  "name": "@ardislu/envpass",
+  "version": "0.1.0",
+  "description": "A CLI and library to encrypt your .env file using a passkey and decrypt it when needed during application execution.",
+  "keywords": [
+    "env",
+    "dotenv",
+    "passkey"
+  ],
+  "author": "Ardis Lu",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ardislu/envpass.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=26.0.0"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11.12.1"
+    }
+  },
+  "files": [
+    "./types/*",
+    "./src/*"
+  ],
+  "imports": {
+    "#src/*.js": "./src/*.js",
+    "#test/*.js": "./test/*.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./decrypt": {
+      "default": "./src/decrypt.js"
+    }
+  },
+  "bin": {
+    "envpass": "./src/cli.js"
+  },
+  "scripts": {
+    "types": "tsc",
+    "types:check": "tsc --noEmit --checkJS",
+    "pretest": "playwright-core install",
+    "test": "node --test",
+    "test:coverage": "npm run test -- --experimental-test-coverage",
+    "prepack": "node ./npm/prepack.js",
+    "postpack": "node ./npm/postpack.js",
+    "pack:dev": "npm run prepack -- --dev && npm pack",
+    "start": "node ./src/cli.js"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "playwright-core": "^1.60.0",
+    "typescript": "^6.0.3"
+  }
+}

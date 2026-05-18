@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>envpass</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(hsl(216deg 50% 90%), hsl(216deg 40% 20%));
+      --text: light-dark(hsl(216deg 50% 10%), hsl(216deg 50% 90%));
+      --a: light-dark(hsl(216deg 100% 45%), hsl(216deg 100% 60%))
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      min-block-size: 100dvb;
+      margin-inline: 16px;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    p {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .link {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--a);
+      font: inherit;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none 6px;
+      text-underline-offset: 8px;
+
+      &:hover {
+        text-decoration-line: underline;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <p>Create or select a passkey, or <button class="link">click here</button> if no prompt appeared. This window will expire in 2 minutes.</p>
+
+  <script type="module">
+    // Extract and delete challenge from URL
+    const { challenge } = Object.fromEntries(new URLSearchParams(location.search));
+    history.replaceState(null, '', location.pathname);
+
+    const p = document.querySelector('p');
+
+    const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const timeoutId = setTimeout(() => p.textContent = 'This window has expired.', WINDOW_EXPIRATION_DURATION);
+
+    async function createPrf(signal) {
+      signal.throwIfAborted();
+      return navigator.credentials.create({
+        signal,
+        publicKey: {
+          rp: { name: '' },
+          user: { id: new ArrayBuffer(1), name: crypto.randomUUID(), displayName: '' },
+          pubKeyCredParams: [{ type: 'public-key', alg: -8 }, { type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          extensions: { prf: { eval: { first: new ArrayBuffer(0) } } },
+          challenge: new ArrayBuffer(0),
+          authenticatorSelection: { residentKey: 'required' }
+        }
+      }).then(c => c.getClientExtensionResults().prf?.results?.first ?? getPrf());
+    }
+    async function getPrf(signal) {
+      signal.throwIfAborted();
+      return navigator.credentials.get({
+        signal,
+        mediation: 'conditional',
+        publicKey: {
+          extensions: { prf: { eval: { first: new ArrayBuffer(0) } } },
+          challenge: new ArrayBuffer(0)
+        }
+      }).then(c => c.getClientExtensionResults().prf.results.first);
+    }
+    async function broadcastPrf(controller) {
+      let prfBuffer;
+      try { prfBuffer = await getPrf(controller.signal); }
+      catch { prfBuffer = await createPrf(controller.signal); }
+      const prf = new Uint8Array(prfBuffer).toHex();
+      const response = await fetch(`http://localhost:${location.port}`, { // Intentionally hardcoding localhost, do not broadcast anywhere else
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge, prf })
+      });
+      if (response.status === 200) {
+        p.textContent = 'Successfully sent passkey. You may close this window now.';
+        clearTimeout(timeoutId);
+      }
+    }
+
+    let controller = new AbortController();
+    let broadcastPromise;
+    document.querySelector('button').addEventListener('click', async e => {
+      e.preventDefault();
+      controller.abort('New request initiated');
+      await broadcastPromise.catch(() => {}); // Error is expected after aborting
+      controller = new AbortController();
+      broadcastPromise = broadcastPrf(controller);
+    });
+    broadcastPromise = broadcastPrf(controller);
+  </script>
+</body>
+
+</html>
