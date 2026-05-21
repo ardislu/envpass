@@ -11,6 +11,12 @@ import { getPrf, BROWSER } from '#src/getPrf.js';
 /** @import { GetPrfResult } from '#src/getPrf.js'; */
 
 /**
+ * @typedef {Object} SetupPlaywrightOptions
+ * @property {boolean} [headless] Whether to launch the browser in `headless` mode or not. The
+ * default value is `true`.
+ */
+
+/**
  * @typedef {Object} SetupPlaywrightResult
  * @property {Page} page Playwright `Page` instance to control the browser.
  * @property {(enabled:boolean)=>Promise<void>} setAutomaticSignIn Configure if the browser will
@@ -20,10 +26,12 @@ import { getPrf, BROWSER } from '#src/getPrf.js';
 /**
  * Setup Playwright to test passkeys, with appropriate teardown hook.
  * @param {TestContext} t Test context to add `after` hook to.
+ * @param {SetupPlaywrightOptions} [options] Selected debugging options to pass to Playwright.
  * @returns {Promise<SetupPlaywrightResult>}
  */
-export async function setupPlaywright(t) {
-  const browser = await chromium.launch();
+export async function setupPlaywright(t, options = {}) {
+  const { headless = true } = options;
+  const browser = await chromium.launch({ headless });
   const context = await browser.newContext();
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
