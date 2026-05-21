@@ -46,15 +46,7 @@ export async function encrypt(options = {}) {
     return;
   }
 
-  const { url, prf: prfPromise } = await getPrf(getPrfOptions);
-  if (!getPrfOptions.autoOpen) {
-    if (!silent) { console.log(`Open this page in a web browser to complete the passkey flow: ${url}`); }
-  }
-  const prf = await prfPromise;
-  if (prf === null) {
-    throw new InputError('Unable to get passkey.');
-  }
-
+  let prf = null;
   /** @type {Env} */const encryptedEnv = Object.create(null);
   for (const [envVar, value] of Object.entries(env)) {
     if (value === undefined) {
@@ -74,6 +66,16 @@ export async function encrypt(options = {}) {
       }
     }
 
+    if (prf === null) {
+      const { url, prf: prfPromise } = await getPrf(getPrfOptions);
+      if (!getPrfOptions.autoOpen) {
+        if (!silent) { console.log(`Open this page in a web browser to complete the passkey flow: ${url}`); }
+      }
+      prf = await prfPromise;
+      if (prf === null) {
+        throw new InputError('Unable to get passkey.');
+      }
+    }
     const encryptedValue = await encryptRaw({ prf, value });
     encryptedEnv[envVar] = encryptedValue;
   }
@@ -127,15 +129,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     return;
   }
 
-  const { url, prf: prfPromise } = await getPrf(getPrfOptions);
-  if (!getPrfOptions.autoOpen) {
-    if (!silent) { console.log(`Open this page in a web browser to complete the passkey flow: ${url}`); }
-  }
-  const prf = await prfPromise;
-  if (prf === null) {
-    throw new InputError('Unable to get passkey.');
-  }
-
+  let prf = null;
   /** @type {Env} */const decryptedEnv = {};
   for (const [envVar, value] of Object.entries(env)) {
     if (value === undefined) {
@@ -151,6 +145,17 @@ export async function decrypt(options = {}, { args = [] } = {}) {
         case 'ignore': continue;
         case 'log': if (!silent) { console.log(`Environment variable "${envVar}" is not encrypted, ignoring.`); } continue;
         case 'error': throw new Error(`Environment variable "${envVar}" is not encrypted.`);
+      }
+    }
+
+    if (prf === null) {
+      const { url, prf: prfPromise } = await getPrf(getPrfOptions);
+      if (!getPrfOptions.autoOpen) {
+        if (!silent) { console.log(`Open this page in a web browser to complete the passkey flow: ${url}`); }
+      }
+      prf = await prfPromise;
+      if (prf === null) {
+        throw new InputError('Unable to get passkey.');
       }
     }
     const decryptedValue = await decryptRaw({ prf, value: parsedValue });

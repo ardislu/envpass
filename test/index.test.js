@@ -1,7 +1,8 @@
 import { suite, test } from 'node:test';
-import { readFile } from 'node:fs/promises';
+import { deepStrictEqual } from 'node:assert';
 
 import { encrypt, decrypt } from '#src/index.js';
+import { BROWSER } from '#src/getPrf.js';
 import { setupPlaywright, setupEnv, mockOpen, assertConsole, fileEqual, fileNotEqual } from '#test/setup.js';
 
 /** Standard value of the .env file used for most setups. */
@@ -56,30 +57,25 @@ suite('e2e', () => {
     await decrypt({ inFile: envFile, silent: true });
     await fileEqual(envFile, '');
   });
-  test('ignores variables already encrypted', async (t) => {
-    const { page } = await setupPlaywright(t);
-    const envFile = await setupEnv(t, STD_ENV);
-    mockOpen(t, page);
-    assertConsole(t, { log: 3 });
-
-    await fileEqual(envFile, STD_ENV);
-    await encrypt({ inFile: envFile });
-
-    const newContent = await readFile(envFile, { encoding: 'utf8' });
-    await encrypt({ inFile: envFile });
-    await fileEqual(envFile, newContent);
-
-    await decrypt({ inFile: envFile });;
-    await fileEqual(envFile, STD_ENV);
-  });
-  test('ignores variables already decrypted', async (t) => {
-    const { page } = await setupPlaywright(t);
-    const envFile = await setupEnv(t, STD_ENV);
-    mockOpen(t, page);
+  test('encrypt does nothing when all variables are already encrypted', async (t) => {
+    const openMock = t.mock.method(BROWSER, 'open');
+    const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
+    const envFile = await setupEnv(t, env);
     assertConsole(t, { log: 1 });
 
-    await fileEqual(envFile, STD_ENV);
+    await encrypt({ inFile: envFile });
+
+    await fileEqual(envFile, env);
+    deepStrictEqual(openMock.mock.calls.length, 0);
+  });
+  test('decrypt does nothing when all variables are already decrypted', async (t) => {
+    const openMock = t.mock.method(BROWSER, 'open');
+    const envFile = await setupEnv(t, STD_ENV);
+    assertConsole(t, { log: 1 });
+
     await decrypt({ inFile: envFile });
+
     await fileEqual(envFile, STD_ENV);
+    deepStrictEqual(openMock.mock.calls.length, 0);
   });
 });
