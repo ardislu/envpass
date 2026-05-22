@@ -94,6 +94,10 @@ export async function getPrf(options = {}) {
         response.writeHead(403).end();
         return;
       }
+      if (request.headers['content-type'] !== 'application/json') {
+        response.writeHead(400).end();
+        return;
+      }
       let body = '';
       request.on('data', chunk => body += chunk);
       request.on('end', () => {
