@@ -59,7 +59,15 @@ export async function getPrf(options = {}) {
   const { promise: prfPromise, resolve: prfResolve } = /** @type {PromiseWithResolvers<Bytes32>}*/(Promise.withResolvers());
   const { promise: abortPromise, resolve: abortResolve } = /** @type {PromiseWithResolvers<null>}*/(Promise.withResolvers());
 
-  const html = await readFile(new URL('./getPrf.html', import.meta.url));
+  const html = await readFile(new URL('./getPrf.html', import.meta.url), { encoding: 'utf8' });
+
+  // Generate hashes of <style> and <script> contents for the CSP header
+  const encoder = new TextEncoder();
+  const style = html.match(/<style.*>([\s\S]*)<\/style>/i)[1];
+  const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
+  const script = html.match(/<script.*>([\s\S]*)<\/script>/i)[1];
+  const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(script))).toBase64();
+
   const server = http.createServer();
 
   // Flow expires after 2 minutes or canceled
@@ -75,6 +83,7 @@ export async function getPrf(options = {}) {
   const challenge = crypto.getRandomValues(new Uint8Array(32)).toHex();
 
   server.on('request', (request, response) => {
+    const { port } = server.address();
     // Return minimal client-side code to get a passkey prf value
     if (request.method === 'GET') {
       const url = new URL(`http://localhost${request.url}`);
@@ -83,13 +92,28 @@ export async function getPrf(options = {}) {
         return;
       }
       response
-        .writeHead(200, { 'Content-Type': 'text/html' })
+        .writeHead(200, {
+          'Content-Type': 'text/html',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'no-referrer',
+          'Cross-Origin-Opener-Policy': 'same-origin',
+          'Cross-Origin-Resource-Policy': 'same-origin',
+          'Content-Security-Policy': `
+            default-src 'none';
+            connect-src http://localhost:${port};
+            style-src 'sha512-${styleHash}';
+            script-src 'sha512-${scriptHash}';
+            base-uri 'none';
+            frame-ancestors 'none';
+            form-action 'none';
+            require-trusted-types-for 'script';
+          `.replace(/\s+/g, ' ') // Collapse whitespace
+        })
         .end(html);
       return;
     }
     // Verify then use the prf
     else if (request.method === 'POST') {
-      const { port } = server.address();
       if (request.headers.origin !== `http://localhost:${port}`) {
         response.writeHead(403).end();
         return;
