@@ -87,8 +87,13 @@ export async function getPrf(options = {}) {
         .end(html);
       return;
     }
-    // Check if the payload has the correct challenge, and if so then use the prf
+    // Verify then use the prf
     else if (request.method === 'POST') {
+      const { port } = server.address();
+      if (request.headers.origin !== `http://localhost:${port}`) {
+        response.writeHead(403).end();
+        return;
+      }
       let body = '';
       request.on('data', chunk => body += chunk);
       request.on('end', () => {

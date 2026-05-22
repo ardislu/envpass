@@ -13,17 +13,20 @@ suite('getPrf.js (server)', () => {
     deepStrictEqual((await fetch(`${origin}?challenge=INVALID`)).status, 401); // Bad challenge
     deepStrictEqual((await fetch(url)).status, 200); // Good
   });
-  test('validates payload on POST', async (t) => {
+  test('validates on POST', async (t) => {
     const { url, prf: prfActual } = await setupServer(t);
     const { origin, searchParams } = new URL(url);
     const challenge = searchParams.get('challenge');
     const prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe';
 
-    deepStrictEqual((await fetch(origin, { method: 'POST', body: JSON.stringify({ prf }) })).status, 401); // No challenge
-    deepStrictEqual((await fetch(origin, { method: 'POST', body: JSON.stringify({ challenge: 'INVALID', prf }) })).status, 401); // Bad challenge
-    deepStrictEqual((await fetch(origin, { method: 'POST', body: JSON.stringify({ challenge }) })).status, 400); // No prf
-    deepStrictEqual((await fetch(origin, { method: 'POST', body: JSON.stringify({ challenge, prf: 'INVALID' }) })).status, 400); // Bad prf
-    deepStrictEqual((await fetch(origin, { method: 'POST', body: JSON.stringify({ challenge, prf }) })).status, 200); // Good
+    deepStrictEqual((await fetch(origin, { method: 'POST', body: JSON.stringify({ challenge, prf }) })).status, 403); // No origin
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin: 'null' }, body: JSON.stringify({ challenge, prf }) })).status, 403); // Null origin
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin: 'https://example.com' }, body: JSON.stringify({ challenge, prf }) })).status, 403); // Bad origin
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin }, body: JSON.stringify({ prf }) })).status, 401); // No challenge
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin }, body: JSON.stringify({ challenge: 'INVALID', prf }) })).status, 401); // Bad challenge
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin }, body: JSON.stringify({ challenge }) })).status, 400); // No prf
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin }, body: JSON.stringify({ challenge, prf: 'INVALID' }) })).status, 400); // Bad prf
+    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin }, body: JSON.stringify({ challenge, prf }) })).status, 200); // Good
     deepStrictEqual(await prfActual, Uint8Array.fromHex(prf));
   });
   test('window expiration works', async (t) => {
