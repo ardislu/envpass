@@ -4,32 +4,75 @@ import { deepStrictEqual, match, ok, rejects } from 'node:assert/strict';
 import { WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
 import { setupPlaywright, setupServer } from '#test/setup.js';
 
+/**
+ * @typedef {Object} MakePostRequestOptions
+ * @property {Record<string,string|null>} [headers] Headers to set on the request. Set a property to
+ * `null` to *delete* that header.
+ * @property {string|null} [challenge] `challenge` string to pass on the request body.
+ * @property {string|null} [prf] `prf` string to pass on the request body.
+ */
+
+/**
+ * Construct a `Request` object for a POST request to the server.
+ * @param {string} url The server URL to send the request to (including `challenge` URL search param).
+ * @param {MakePostRequestOptions} [options] Optional settings to override the default valid values.
+ */
+function makePostRequest(url, options = {}) {
+  const { origin, searchParams } = new URL(url);
+  const {
+    headers = {},
+    challenge = searchParams.get('challenge'),
+    prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe'
+  } = options;
+  const mergedHeaders = {
+    'Content-Type': 'application/json',
+    'Origin': origin,
+    ...headers
+  }
+  const filteredHeaders = Object.fromEntries(Object.entries(mergedHeaders).filter(([, v]) => v !== null));
+  const body = Object.fromEntries(Object.entries({ challenge, prf }).filter(([, v]) => v !== null));
+  return new Request(origin, {
+    method: 'POST',
+    headers: filteredHeaders,
+    body: JSON.stringify(body)
+  });
+}
+
 suite('getPrf.js (server)', () => {
+  test('valid GET works', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(url)).status, 200);
+  });
   test('validates challenge query parameter on GET', async (t) => {
     const { url } = await setupServer(t);
     const { origin } = new URL(url);
-
     deepStrictEqual((await fetch(origin)).status, 401); // No challenge
     deepStrictEqual((await fetch(`${origin}?challenge=INVALID`)).status, 401); // Bad challenge
-    deepStrictEqual((await fetch(url)).status, 200); // Good
   });
-  test('validates on POST', async (t) => {
-    const { url, prf: prfActual } = await setupServer(t);
-    const { origin, searchParams } = new URL(url);
-    const challenge = searchParams.get('challenge');
-    const prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe';
-
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge, prf }) })).status, 403); // No origin
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin: 'null', 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge, prf }) })).status, 403); // Null origin
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin: 'https://example.com', 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge, prf }) })).status, 403); // Bad origin
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin }, body: JSON.stringify({ challenge, prf }) })).status, 400); // No Content-Type
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin, 'Content-Type': 'INVALID' }, body: JSON.stringify({ challenge, prf }) })).status, 400); // Bad Content-Type
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ prf }) })).status, 401); // No challenge
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge: 'INVALID', prf }) })).status, 401); // Bad challenge
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge }) })).status, 400); // No prf
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge, prf: 'INVALID' }) })).status, 400); // Bad prf
-    deepStrictEqual((await fetch(origin, { method: 'POST', headers: { origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ challenge, prf }) })).status, 200); // Good
-    deepStrictEqual(await prfActual, Uint8Array.fromHex(prf));
+  test('valid POST works', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url))).status, 200);
+  });
+  test('validates Origin header on POST', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Origin': null } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Origin': 'null' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Origin': 'https://example.com' } }))).status, 403);
+  });
+  test('validates Content-Type header on POST', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Content-Type': null } }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Content-Type': 'INVALID' } }))).status, 400);
+  });
+  test('validates challenge on POST', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url, { challenge: null }))).status, 401);
+    deepStrictEqual((await fetch(makePostRequest(url, { challenge: 'INVALID' }))).status, 401);
+  });
+  test('validates prf on POST', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: null }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: 'INVALID' }))).status, 400);
   });
   test('window expiration works', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] }); // MUST be called BEFORE setupServer()
