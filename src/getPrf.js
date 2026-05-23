@@ -114,7 +114,10 @@ export async function getPrf(options = {}) {
     }
     // Verify then use the prf
     else if (request.method === 'POST') {
-      if (request.headers.origin !== `http://localhost:${port}`) {
+      if (request.headers.origin !== `http://localhost:${port}`
+        || request.headers['sec-fetch-site'] !== 'same-origin'
+        || request.headers['sec-fetch-mode'] !== 'cors'
+        || request.headers['sec-fetch-dest'] !== 'empty') {
         response.writeHead(403).end();
         return;
       }

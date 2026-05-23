@@ -1,6 +1,8 @@
 import { suite, test } from 'node:test';
 import { deepStrictEqual, match, ok, rejects } from 'node:assert/strict';
 
+import { request } from 'undici';
+
 import { WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
 import { setupPlaywright, setupServer } from '#test/setup.js';
 
@@ -27,6 +29,9 @@ function makePostRequest(url, options = {}) {
   const mergedHeaders = {
     'Content-Type': 'application/json',
     'Origin': origin,
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Dest': 'empty',
     ...headers
   }
   const filteredHeaders = Object.fromEntries(Object.entries(mergedHeaders).filter(([, v]) => v !== null));
@@ -58,6 +63,51 @@ suite('getPrf.js (server)', () => {
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Origin': null } }))).status, 403);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Origin': 'null' } }))).status, 403);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Origin': 'https://example.com' } }))).status, 403);
+  });
+  test('validates Sec-Fetch-Site header on POST', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Site': null } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Site': 'cross-site' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Site': 'same-site' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Site': 'same-origin' } }))).status, 200);
+  });
+  test('validates Sec-Fetch-Mode header on POST', async (t) => {
+    // undici `fetch` does not allow changing the Sec-Fetch-Mode header, so use the lower-level `request` instead.
+    // See https://github.com/nodejs/undici/issues/1305
+    const { url } = await setupServer(t);
+    const { origin, searchParams } = new URL(url);
+    const challenge = searchParams.get('challenge');
+    const prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe';
+    const options = {
+      method: 'POST',
+      headers: /** @type {{[key:string]:string}} */({
+        'Content-Type': 'application/json',
+        'Origin': origin,
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-Dest': 'empty'
+      }),
+      body: JSON.stringify({ challenge, prf })
+    }
+    deepStrictEqual((await request(origin, options)).statusCode, 403); // Tests the unset case
+    options.headers['Sec-Fetch-Mode'] = 'navigate';
+    deepStrictEqual((await request(origin, options)).statusCode, 403);
+    options.headers['Sec-Fetch-Mode'] = 'no-cors';
+    deepStrictEqual((await request(origin, options)).statusCode, 403);
+    options.headers['Sec-Fetch-Mode'] = 'same-origin';
+    deepStrictEqual((await request(origin, options)).statusCode, 403);
+    options.headers['Sec-Fetch-Mode'] = 'websocket';
+    deepStrictEqual((await request(origin, options)).statusCode, 403);
+    options.headers['Sec-Fetch-Mode'] = 'cors';
+    deepStrictEqual((await request(origin, options)).statusCode, 200);
+  });
+  test('validates Sec-Fetch-Dest  header on POST', async (t) => {
+    const { url } = await setupServer(t);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': null } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'frame' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'iframe' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'document' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'embed' } }))).status, 403);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'empty' } }))).status, 200);
   });
   test('validates Content-Type header on POST', async (t) => {
     const { url } = await setupServer(t);
