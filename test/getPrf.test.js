@@ -22,7 +22,6 @@ function filterNullValues(obj) {
  * @typedef {Object} MakePostRequestOptions
  * @property {Record<string,string|null>} [headers] Headers to set on the request. Set a property to
  * `null` to *delete* that header.
- * @property {string|null} [challenge] `challenge` string to pass on the request body.
  * @property {string|null} [prf] `prf` string to pass on the request body.
  */
 
@@ -35,7 +34,6 @@ function makePostRequest(url, options = {}) {
   const { origin, searchParams } = new URL(url);
   const {
     headers = {},
-    challenge = searchParams.get('challenge'),
     prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe'
   } = options;
   const mergedHeaders = {
@@ -44,10 +42,11 @@ function makePostRequest(url, options = {}) {
     'Sec-Fetch-Site': 'same-origin',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Dest': 'empty',
+    'Envpass-Challenge': searchParams.get('challenge'),
     ...headers
   }
   const filteredHeaders = filterNullValues(mergedHeaders);
-  const body = filterNullValues({ challenge, prf });
+  const body = filterNullValues({ prf });
   return new Request(origin, {
     method: 'POST',
     headers: filteredHeaders,
@@ -88,7 +87,6 @@ suite('getPrf.js (server)', () => {
     // See https://github.com/nodejs/undici/issues/1305
     const { url } = await setupServer(t);
     const { origin, searchParams } = new URL(url);
-    const challenge = searchParams.get('challenge');
     const prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe';
     const options = {
       method: 'POST',
@@ -96,9 +94,10 @@ suite('getPrf.js (server)', () => {
         'Content-Type': 'application/json',
         'Origin': origin,
         'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-Dest': 'empty'
+        'Sec-Fetch-Dest': 'empty',
+        'Envpass-Challenge': searchParams.get('challenge')
       }),
-      body: JSON.stringify({ challenge, prf })
+      body: JSON.stringify({ prf })
     }
     deepStrictEqual((await request(origin, options)).statusCode, 403); // Tests the unset case
     options.headers['Sec-Fetch-Mode'] = 'navigate';
@@ -126,10 +125,10 @@ suite('getPrf.js (server)', () => {
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Content-Type': null } }))).status, 400);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Content-Type': 'INVALID' } }))).status, 400);
   });
-  test('validates challenge on POST', async (t) => {
+  test('validates Envpass-Challenge header on POST', async (t) => {
     const { url } = await setupServer(t);
-    deepStrictEqual((await fetch(makePostRequest(url, { challenge: null }))).status, 401);
-    deepStrictEqual((await fetch(makePostRequest(url, { challenge: 'INVALID' }))).status, 401);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Envpass-Challenge': null } }))).status, 401);
+    deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Envpass-Challenge': 'INVALID' } }))).status, 401);
   });
   test('validates prf on POST', async (t) => {
     const { url } = await setupServer(t);

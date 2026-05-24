@@ -94,8 +94,11 @@
       const prf = new Uint8Array(prfBuffer).toHex();
       const response = await fetch(`http://localhost:${location.port}`, { // Intentionally hardcoding localhost, do not broadcast anywhere else
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ challenge, prf })
+        headers: {
+          'Content-Type': 'application/json',
+          'Envpass-Challenge': challenge
+        },
+        body: JSON.stringify({ prf })
       });
       if (response.status === 200) {
         p.textContent = 'Successfully sent passkey. You may close this window now.';

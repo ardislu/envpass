@@ -125,14 +125,14 @@ export async function getPrf(options = {}) {
         response.writeHead(400).end();
         return;
       }
+      if (request.headers['envpass-challenge'] !== challenge) {
+        response.writeHead(401).end();
+        return;
+      }
       let body = '';
       request.on('data', chunk => body += chunk);
       request.on('end', () => {
         const payload = JSON.parse(body);
-        if (payload.challenge !== challenge) {
-          response.writeHead(401).end();
-          return;
-        }
         const prf = parsePrf(payload.prf);
         if (prf === null) {
           response.writeHead(400).end();
