@@ -112,7 +112,7 @@ suite('getPrf.js (server)', () => {
     options.headers['Sec-Fetch-Mode'] = 'cors';
     deepStrictEqual((await request(origin, options)).statusCode, 200);
   });
-  test('validates Sec-Fetch-Dest  header on POST', async (t) => {
+  test('validates Sec-Fetch-Dest header on POST', async (t) => {
     const { url } = await setupServer(t);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': null } }))).status, 403);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'frame' } }))).status, 403);
