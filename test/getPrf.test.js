@@ -7,6 +7,18 @@ import { WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
 import { setupPlaywright, setupServer } from '#test/setup.js';
 
 /**
+ * Return a new object where all properties in the object with the value `null` are *deleted*.
+ * @template T
+ * @param {Record<string,T|null>} obj An object that may have properties with a `null` value.
+ * @returns {Record<string,NonNullable<T>>}
+ */
+function filterNullValues(obj) {
+  return /** @type {Record<string,NonNullable<T>>} */(
+    Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== null))
+  );
+}
+
+/**
  * @typedef {Object} MakePostRequestOptions
  * @property {Record<string,string|null>} [headers] Headers to set on the request. Set a property to
  * `null` to *delete* that header.
@@ -34,8 +46,8 @@ function makePostRequest(url, options = {}) {
     'Sec-Fetch-Dest': 'empty',
     ...headers
   }
-  const filteredHeaders = Object.fromEntries(Object.entries(mergedHeaders).filter(([, v]) => v !== null));
-  const body = Object.fromEntries(Object.entries({ challenge, prf }).filter(([, v]) => v !== null));
+  const filteredHeaders = filterNullValues(mergedHeaders);
+  const body = filterNullValues({ challenge, prf });
   return new Request(origin, {
     method: 'POST',
     headers: filteredHeaders,
