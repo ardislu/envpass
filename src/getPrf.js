@@ -4,7 +4,6 @@ import { readFile } from 'node:fs/promises';
 
 import open from 'open';
 
-import { parsePrf } from '#src/utils.js';
 /** @import { Bytes32 } from '#src/utils.js'; */
 
 /**
@@ -121,7 +120,7 @@ export async function getPrf(options = {}) {
         response.writeHead(403).end();
         return;
       }
-      if (request.headers['content-type'] !== 'application/json') {
+      if (request.headers['content-type'] !== 'application/octet-stream') {
         response.writeHead(400).end();
         return;
       }
@@ -129,12 +128,20 @@ export async function getPrf(options = {}) {
         response.writeHead(401).end();
         return;
       }
-      let body = '';
-      request.on('data', chunk => body += chunk);
+      const prf = new Uint8Array(32); // PRF is always 32 bytes, see https://w3c.github.io/webauthn/#prf-extension
+      let offset = 0;
+      request.on('data', chunk => {
+        try { prf.set(chunk, offset); }
+        catch { // Invalid chunk or too many bytes, stop processing immediately.
+          response.writeHead(400).end();
+          request.destroy();
+          return;
+        }
+        chunk.fill(0);
+        offset += chunk.byteLength;
+      });
       request.on('end', () => {
-        const payload = JSON.parse(body);
-        const prf = parsePrf(payload.prf);
-        if (prf === null) {
+        if (offset !== 32) { // Not all 32 PRF bytes were from passkey
           response.writeHead(400).end();
           return;
         }

@@ -88,18 +88,18 @@
       }).then(c => c.getClientExtensionResults().prf.results.first);
     }
     async function broadcastPrf(controller) {
-      let prfBuffer;
-      try { prfBuffer = await getPrf(controller.signal); }
-      catch { prfBuffer = await createPrf(controller.signal); }
-      const prf = new Uint8Array(prfBuffer).toHex();
+      const prf = new Uint8Array(32);
+      try { prf.set(await getPrf(controller.signal)); }
+      catch { prf.set(await createPrf(controller.signal)); }
       const response = await fetch(`http://localhost:${location.port}`, { // Intentionally hardcoding localhost, do not broadcast anywhere else
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/octet-stream',
           'Envpass-Challenge': challenge
         },
-        body: JSON.stringify({ prf })
+        body: prf
       });
+      prf.fill(0);
       if (response.status === 200) {
         p.textContent = 'Successfully sent passkey. You may close this window now.';
         clearTimeout(timeoutId);

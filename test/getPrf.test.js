@@ -22,7 +22,7 @@ function filterNullValues(obj) {
  * @typedef {Object} MakePostRequestOptions
  * @property {Record<string,string|null>} [headers] Headers to set on the request. Set a property to
  * `null` to *delete* that header.
- * @property {string|null} [prf] `prf` string to pass on the request body.
+ * @property {BufferSource|null} [prf] `prf` buffer to pass on the request body.
  */
 
 /**
@@ -34,10 +34,10 @@ function makePostRequest(url, options = {}) {
   const { origin, searchParams } = new URL(url);
   const {
     headers = {},
-    prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe'
+    prf = Uint8Array.fromHex('deadbeef000000000000000000000000000000000000000000000000cafebabe')
   } = options;
   const mergedHeaders = {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/octet-stream',
     'Origin': origin,
     'Sec-Fetch-Site': 'same-origin',
     'Sec-Fetch-Mode': 'cors',
@@ -46,11 +46,10 @@ function makePostRequest(url, options = {}) {
     ...headers
   }
   const filteredHeaders = filterNullValues(mergedHeaders);
-  const body = filterNullValues({ prf });
   return new Request(origin, {
     method: 'POST',
     headers: filteredHeaders,
-    body: JSON.stringify(body)
+    body: prf
   });
 }
 
@@ -87,17 +86,17 @@ suite('getPrf.js (server)', () => {
     // See https://github.com/nodejs/undici/issues/1305
     const { url } = await setupServer(t);
     const { origin, searchParams } = new URL(url);
-    const prf = 'deadbeef000000000000000000000000000000000000000000000000cafebabe';
+    const prf = Uint8Array.fromHex('deadbeef000000000000000000000000000000000000000000000000cafebabe');
     const options = {
       method: 'POST',
       headers: /** @type {{[key:string]:string}} */({
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/octet-stream',
         'Origin': origin,
         'Sec-Fetch-Site': 'same-origin',
         'Sec-Fetch-Dest': 'empty',
         'Envpass-Challenge': searchParams.get('challenge')
       }),
-      body: JSON.stringify({ prf })
+      body: prf
     }
     deepStrictEqual((await request(origin, options)).statusCode, 403); // Tests the unset case
     options.headers['Sec-Fetch-Mode'] = 'navigate';
@@ -133,7 +132,11 @@ suite('getPrf.js (server)', () => {
   test('validates prf on POST', async (t) => {
     const { url } = await setupServer(t);
     deepStrictEqual((await fetch(makePostRequest(url, { prf: null }))).status, 400);
-    deepStrictEqual((await fetch(makePostRequest(url, { prf: 'INVALID' }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: new Uint8Array() }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: Uint8Array.fromHex('11') }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: Uint8Array.fromHex('11'.repeat(31)) }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: Uint8Array.fromHex('11'.repeat(33)) }))).status, 400);
+    deepStrictEqual((await fetch(makePostRequest(url, { prf: Uint8Array.fromHex('11'.repeat(32)) }))).status, 200);
   });
   test('window expiration works', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] }); // MUST be called BEFORE setupServer()

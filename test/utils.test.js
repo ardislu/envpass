@@ -1,7 +1,7 @@
 import { suite, test } from 'node:test';
 import { ok, deepStrictEqual, throws } from 'node:assert/strict';
 
-import { toEnvString, parsePrf, parseEnvpassEncrypted, InputError } from '#src/utils.js';
+import { toEnvString, parseEnvpassEncrypted, InputError } from '#src/utils.js';
 import { parseEnv } from 'node:util';
 
 // Useful reference: https://dotenvx.com/spec/
@@ -21,35 +21,6 @@ suite('toEnvString', { concurrency: true }, () => {
       const env = Object.create(null);
       Object.assign(env, obj);
       deepStrictEqual(parseEnv(toEnvString(env)), env);
-    });
-  }
-});
-
-suite('parsePrf', { concurrency: true }, () => {
-  const rejects = [
-    { name: 'rejects empty', input: '' },
-    { name: 'rejects 1 character', input: 'a' },
-    { name: 'rejects 2 characters', input: 'aa' },
-    { name: 'rejects 62 characters', input: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    { name: 'rejects 66 characters', input: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    { name: 'rejects non-hex', input: 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz' },
-    { name: 'rejects non-hex with "0x" prefix', input: '0xzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz' },
-  ];
-  for (const { name, input } of rejects) {
-    test(name, { concurrency: true }, () => {
-      deepStrictEqual(parsePrf(input), null);
-    });
-  }
-  const accepts = [
-    { name: 'accepts all lowercase', input: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    { name: 'accepts all uppercase', input: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' },
-    { name: 'accepts mixed case', input: 'AaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa' },
-    { name: 'accepts with "0x" prefix', input: '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa' },
-    { name: 'accepts with "0X" prefix', input: '0XAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa' },
-  ];
-  for (const { name, input } of accepts) {
-    test(name, { concurrency: true }, () => {
-      deepStrictEqual(parsePrf(input), Uint8Array.fromHex(input.replace(/0x/i, '')));
     });
   }
 });
