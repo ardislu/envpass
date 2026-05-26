@@ -63,7 +63,7 @@
     "open": "^11.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.8.0",
+    "@types/node": "^25.9.1",
     "playwright-core": "^1.60.0",
     "typescript": "^6.0.3",
     "undici": "^8.3.0"
