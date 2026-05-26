@@ -62,9 +62,15 @@ export async function getPrf(options = {}) {
 
   // Generate hashes of <style> and <script> contents for the CSP header
   const encoder = new TextEncoder();
-  const style = html.match(/<style.*>([\s\S]*)<\/style>/i)[1];
+  const style = html.match(/<style.*>([\s\S]*)<\/style>/i)?.[1];
+  const script = html.match(/<script.*>([\s\S]*)<\/script>/i)?.[1];
+  if (style === undefined) {
+    throw new Error('Could not find <style> tag in getPrf.html file.');
+  }
+  if (script === undefined) {
+    throw new Error('Could not find <script> tag in getPrf.html file.');
+  }
   const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
-  const script = html.match(/<script.*>([\s\S]*)<\/script>/i)[1];
   const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(script))).toBase64();
 
   const server = http.createServer();
@@ -82,7 +88,7 @@ export async function getPrf(options = {}) {
   const challenge = crypto.getRandomValues(new Uint8Array(32)).toHex();
 
   server.on('request', (request, response) => {
-    const { port } = server.address();
+    const { port } = /** @type {AddressInfo} */(server.address());
     // Return minimal client-side code to get a passkey prf value
     if (request.method === 'GET') {
       const url = new URL(`http://localhost${request.url}`);
@@ -128,7 +134,8 @@ export async function getPrf(options = {}) {
         response.writeHead(401).end();
         return;
       }
-      const prf = new Uint8Array(32); // PRF is always 32 bytes, see https://w3c.github.io/webauthn/#prf-extension
+      // PRF is always 32 bytes, see https://w3c.github.io/webauthn/#prf-extension
+      const prf = /** @type {Bytes32}*/(new Uint8Array(32));
       let offset = 0;
       request.on('data', chunk => {
         try { prf.set(chunk, offset); }
