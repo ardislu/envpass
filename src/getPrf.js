@@ -74,6 +74,9 @@ export async function getPrf(options = {}) {
   const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(script))).toBase64();
 
   const server = http.createServer();
+  server.keepAliveTimeout = 0;
+  server.maxRequestsPerSocket = 1;
+  server.requestTimeout = 1000;
 
   // Flow expires after 2 minutes or canceled
   const timeoutId = setTimeout(() => server.close(() => abortResolve(null)), WINDOW_EXPIRATION_DURATION);
