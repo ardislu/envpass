@@ -2,9 +2,9 @@
 
 /**
  * Create a `CryptoKey` from a high-entropy random value using HKDF.
- * @param {ArrayBuffer|ArrayBufferView<ArrayBuffer>} rand A high-entropy random value.
- * @param {ArrayBuffer|ArrayBufferView<ArrayBuffer>} salt A cryptographic salt value.
- * @param {ArrayBuffer|ArrayBufferView<ArrayBuffer>} info Additional contextual information.
+ * @param {ArrayBuffer|Uint8Array<ArrayBuffer>} rand A high-entropy random value.
+ * @param {ArrayBuffer|Uint8Array<ArrayBuffer>} salt A cryptographic salt value.
+ * @param {ArrayBuffer|Uint8Array<ArrayBuffer>} info Additional contextual information.
  * @returns {Promise<CryptoKey>} A `CryptoKey` that can be used for `"encrypt"` or `"decrypt"`.
  */
 async function getKey(rand, salt, info) {
@@ -36,7 +36,7 @@ async function getKey(rand, salt, info) {
  * @typedef {Object} EncryptRawOptions
  * @property {EnvpassVersion} [version] Encryption version to use. Currently, only `'v1'` is supported. The default
  * value is `'v1'`.
- * @property {ArrayBuffer|ArrayBufferView<ArrayBuffer>} prf Value returned by the passkey's pseudo-random function,
+ * @property {ArrayBuffer|Uint8Array<ArrayBuffer>} prf Value returned by the passkey's pseudo-random function,
  * which will be used to derive the cryptographic key to encrypt the variables.
  * @property {string} value Plaintext value to encrypt.
  */
@@ -51,7 +51,7 @@ export async function encryptRaw(options) {
   const { version = 'v1', prf, value } = options;
 
   if (!ArrayBuffer.isView(prf) && !(prf instanceof ArrayBuffer)) {
-    throw new TypeError(`prf "${prf}" is not an ArrayBuffer or ArrayBufferView.`);
+    throw new TypeError(`prf "${prf}" is not an ArrayBuffer or Uint8Array.`);
   }
 
   if (typeof value !== 'string') {
@@ -95,7 +95,7 @@ export async function encryptRaw(options) {
 
 /**
  * @typedef {Object} DecryptRawOptions
- * @property {ArrayBuffer|ArrayBufferView<ArrayBuffer>} prf Value returned by the passkey's pseudo-random function,
+ * @property {ArrayBuffer|Uint8Array<ArrayBuffer>} prf Value returned by the passkey's pseudo-random function,
  * which will be used to derive the cryptographic key to decrypt the variables.
  * @property {EnvpassEncryptedValue} value Encrypted ciphertext value to decrypt.
  */
@@ -111,7 +111,7 @@ export async function decryptRaw(options) {
   const [magic, version, valueBase64] = value.split(':');
 
   if (!ArrayBuffer.isView(prf) && !(prf instanceof ArrayBuffer)) {
-    throw new TypeError(`prf "${prf}" is not an ArrayBuffer or ArrayBufferView.`);
+    throw new TypeError(`prf "${prf}" is not an ArrayBuffer or Uint8Array.`);
   }
 
   if (magic !== 'envpass') {
