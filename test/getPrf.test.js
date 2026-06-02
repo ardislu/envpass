@@ -22,7 +22,7 @@ function filterNullValues(obj) {
  * @typedef {Object} MakePostRequestOptions
  * @property {Record<string,string|null>} [headers] Headers to set on the request. Set a property to
  * `null` to *delete* that header.
- * @property {ArrayBuffer|ArrayBufferView<ArrayBuffer>|null} [prf] `prf` buffer to pass on the request body.
+ * @property {ArrayBuffer|Uint8Array<ArrayBuffer>|null} [prf] `prf` buffer to pass on the request body.
  */
 
 /**
