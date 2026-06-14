@@ -36,4 +36,4 @@ jobs:
           package-manager-cache: false
       - run: npm install -g npm@latest
       - run: npm ci
-      - run: npm publish --provenance --access public
+      - run: npm stage publish --provenance --access public
