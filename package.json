@@ -15,7 +15,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12.0"
   },
   "devEngines": {
     "runtime": {
@@ -59,7 +59,7 @@
     "start": "node ./src/cli.js"
   },
   "dependencies": {
-    "commander": "^14.0.3",
+    "commander": "^15.0.0",
     "open": "^11.0.0"
   },
   "devDependencies": {
