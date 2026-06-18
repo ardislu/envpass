@@ -143,6 +143,7 @@ export async function getPrf(options = {}) {
       request.on('data', chunk => {
         try { prf.set(chunk, offset); }
         catch { // Invalid chunk or too many bytes, stop processing immediately.
+          prf.fill(0);
           response.writeHead(400).end();
           request.destroy();
           return;
