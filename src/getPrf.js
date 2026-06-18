@@ -153,6 +153,7 @@ export async function getPrf(options = {}) {
       });
       request.on('end', () => {
         if (offset !== 32) { // Not all 32 PRF bytes were from passkey
+          prf.fill(0);
           response.writeHead(400).end();
           return;
         }
