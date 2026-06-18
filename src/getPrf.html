@@ -98,8 +98,9 @@
           'Envpass-Challenge': challenge
         },
         body: prf
+      }).finally(() => {
+        prf.fill(0);
       });
-      prf.fill(0);
       if (response.status === 200) {
         p.textContent = 'Successfully sent passkey. You may close this window now.';
         clearTimeout(timeoutId);
