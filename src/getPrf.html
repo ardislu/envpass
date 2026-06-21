@@ -108,7 +108,7 @@
     }
 
     let controller = new AbortController();
-    let broadcastPromise;
+    let broadcastPromise = broadcastPrf(controller);
     document.querySelector('button').addEventListener('click', async e => {
       e.preventDefault();
       controller.abort('New request initiated');
@@ -116,7 +116,6 @@
       controller = new AbortController();
       broadcastPromise = broadcastPrf(controller);
     });
-    broadcastPromise = broadcastPrf(controller);
   </script>
 </body>
 
