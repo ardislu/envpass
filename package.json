@@ -44,6 +44,7 @@
       "default": "./src/decrypt.js"
     }
   },
+  "types": "./types/index.d.ts",
   "bin": {
     "envpass": "src/cli.js"
   },
