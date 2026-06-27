@@ -36,7 +36,7 @@ This is a side effect only import which will run the `decrypt` function with def
 npx envpass decrypt
 ```
 
-## In-process usage
+## Global usage
 
 If you can't or don't want to install the package in your project, you can install `envpass` globally and then decrypt on a process-by-process basis:
 
