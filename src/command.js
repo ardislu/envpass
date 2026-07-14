@@ -1,4 +1,4 @@
-import { parseEnv, styleText } from 'node:util';
+import { parseEnv } from 'node:util';
 import { readFile, writeFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 /** @import { PathLike } from 'node:fs'; */
@@ -69,9 +69,6 @@ export async function encrypt(options = {}) {
 
     if (prf === null) {
       const { url, prf: prfPromise } = await getPrf(getPrfOptions);
-      if (!getPrfOptions.autoOpen) {
-        logger.info?.(`Open this page in a web browser to complete the passkey flow: ${url}`);
-      }
       prf = await prfPromise;
       if (prf === null) {
         throw new InputError('Unable to get passkey.');
@@ -84,7 +81,6 @@ export async function encrypt(options = {}) {
   if (outFile) {
     await writeFile(outFile, toEnvString(encryptedEnv));
   }
-  logger.info?.(styleText('green', '🎉 Successfully encrypted environment variables!'));
 }
 
 /**
@@ -150,9 +146,6 @@ export async function decrypt(options = {}, { args = [] } = {}) {
 
     if (prf === null) {
       const { url, prf: prfPromise } = await getPrf(getPrfOptions);
-      if (!getPrfOptions.autoOpen) {
-        logger.info?.(`Open this page in a web browser to complete the passkey flow: ${url}`);
-      }
       prf = await prfPromise;
       if (prf === null) {
         throw new InputError('Unable to get passkey.');
@@ -172,7 +165,6 @@ export async function decrypt(options = {}, { args = [] } = {}) {
       await writeFile(outFile, toEnvString(decryptedEnv));
     }
   }
-  logger.info?.(styleText('green', '🎉 Successfully decrypted environment variables!'));
   if (args.length > 0) {
     execSync(args.join(' '), { stdio: 'inherit' });
   }
