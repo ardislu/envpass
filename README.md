@@ -52,6 +52,50 @@ npm i -g @ardislu/envpass
 envpass decrypt -is -- node index.js
 ```
 
+## Library usage
+
+To fine-tune usage, you can call the `encrypt` or `decrypt` functions in code.
+
+### Decrypt and set variables in `process.env`
+
+The code below is equivalent to `import '@ardislu/envpass/decrypt'`:
+
+```javascript
+import { decrypt } from '@ardislu/envpass';
+
+await decrypt({
+  outFile: false,
+  injectInProcess: true,
+  silent: true
+});
+```
+
+### Set a specific port for the passkey bridge
+
+The same option is available for `decrypt` as well.
+
+```javascript
+import { encrypt } from '@ardislu/envpass';
+
+await encrypt({
+  getPrfOptions: { port: 9999 }
+});
+```
+
+### Manually abort the passkey flow
+
+The same option is available for `decrypt` as well.
+
+```javascript
+import { encrypt } from '@ardislu/envpass';
+
+const controller = new AbortController();
+const encryptionPromise = encrypt({
+  getPrfOptions: { signal: controller.signal }
+});
+controller.abort();
+```
+
 ## CLI reference
 
 ```
@@ -92,20 +136,6 @@ Options:
   -i, --inject-in-process  inject the decrypted environment variables to process.env (and ignore --out-file)
   -s, --silent             do not log anything to console
   -h, --help               display help for command
-```
-
-## Library reference
-
-```javascript
-import { encrypt, decrypt } from '@ardislu/envpass';
-
-await encrypt({
-  // ...
-});
-
-await decrypt({
-  // ...
-});
 ```
 
 ## Why?
