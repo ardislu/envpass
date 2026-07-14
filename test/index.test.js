@@ -13,7 +13,7 @@ suite('e2e', () => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
     mockOpen(t, page);
-    assertConsole(t, { log: 2 });
+    assertConsole(t, { info: 0 });
 
     await fileEqual(envFile, STD_ENV);
     await encrypt({ inFile: envFile });
@@ -21,23 +21,23 @@ suite('e2e', () => {
     await decrypt({ inFile: envFile });
     await fileEqual(envFile, STD_ENV);
   });
-  test('encrypt and decrypt .env silently', async (t) => {
+  test('console logger works', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
     mockOpen(t, page);
-    assertConsole(t, { log: 0 });
+    assertConsole(t, { info: 2 });
 
     await fileEqual(envFile, STD_ENV);
-    await encrypt({ inFile: envFile, silent: true });
+    await encrypt({ inFile: envFile, logger: console });
     await fileNotEqual(envFile, STD_ENV);
-    await decrypt({ inFile: envFile, silent: true });
+    await decrypt({ inFile: envFile, logger: console });
     await fileEqual(envFile, STD_ENV);
   });
   test('does nothing to empty .env file', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
     mockOpen(t, page);
-    assertConsole(t, { log: 2 });
+    assertConsole(t, { info: 0 });
 
     await fileEqual(envFile, '');
     await encrypt({ inFile: envFile });
@@ -45,23 +45,11 @@ suite('e2e', () => {
     await decrypt({ inFile: envFile });
     await fileEqual(envFile, '');
   });
-  test('does nothing to empty .env file silently', async (t) => {
-    const { page } = await setupPlaywright(t);
-    const envFile = await setupEnv(t, '');
-    mockOpen(t, page);
-    assertConsole(t, { log: 0 });
-
-    await fileEqual(envFile, '');
-    await encrypt({ inFile: envFile, silent: true });
-    await fileEqual(envFile, '');
-    await decrypt({ inFile: envFile, silent: true });
-    await fileEqual(envFile, '');
-  });
   test('encrypt does nothing when all variables are already encrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
     const envFile = await setupEnv(t, env);
-    assertConsole(t, { log: 1 });
+    assertConsole(t, { info: 0 });
 
     await encrypt({ inFile: envFile });
 
@@ -71,7 +59,7 @@ suite('e2e', () => {
   test('decrypt does nothing when all variables are already decrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, STD_ENV);
-    assertConsole(t, { log: 1 });
+    assertConsole(t, { info: 0 });
 
     await decrypt({ inFile: envFile });
 

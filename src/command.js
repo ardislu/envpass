@@ -7,7 +7,7 @@ import { getPrf } from '#src/getPrf.js';
 import { encryptRaw, decryptRaw } from '#src/crypto.js';
 import { toEnvString, parseEnvpassEncrypted, InputError } from '#src/utils.js';
 /** @import { GetPrfOptions } from '#src/getPrf.js'; */
-/** @import { Env } from '#src/utils.js'; */
+/** @import { Logger, Env } from '#src/utils.js'; */
 
 /**
  * @typedef {Object} EncryptOptions
@@ -17,13 +17,14 @@ import { toEnvString, parseEnvpassEncrypted, InputError } from '#src/utils.js';
  * @property {'ignore'|'log'|'encrypt'|'error'} [alreadyEncryptedValue] What to do when encountering a value
  * that is already envpass encrypted (i.e., the value is already in the format `'envpass:{version}:{string}'`).
  * - `'ignore'` will not encrypt the value and instead passthrough the value as-is.
- * - `'log'` will do the same as `'ignore'`, but also log the variable name to console.
+ * - `'log'` will do the same as `'ignore'`, but also log the variable name to `logger.info()`.
  * - `'encrypt'` will encrypt the value again anyway.
  * - `'error'` will throw an error.
  * 
  * The default value is `'ignore'`.
  * @property {GetPrfOptions} [getPrfOptions] Options for the passkey page and server.
- * @property {boolean} [silent] If `true`, do not log to console. The default value is `false`.
+ * @property {Logger} [logger] Logger to use to record diagnostic information. The default value is `{}` (i.e.,
+ * drop all logs).
  */
 
 /**
@@ -37,12 +38,12 @@ export async function encrypt(options = {}) {
     outFile = inFile,
     alreadyEncryptedValue = 'ignore',
     getPrfOptions = { autoOpen: true, port: undefined },
-    silent = false
+    logger = {}
   } = options;
 
   const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
   if (Object.keys(env).length === 0) {
-    if (!silent) { console.log('No environment variables found, aborting.'); }
+    logger.info?.('No environment variables found, aborting.');
     return;
   }
 
@@ -50,7 +51,7 @@ export async function encrypt(options = {}) {
   /** @type {Env} */const encryptedEnv = Object.create(null);
   for (const [envVar, value] of Object.entries(env)) {
     if (value === undefined) {
-      if (!silent) { console.log(`Environment variable "${envVar}" is unset, skipping encryption.`); }
+      logger.info?.(`Environment variable "${envVar}" is unset, skipping encryption.`);
       encryptedEnv[envVar] = '';
       continue;
     }
@@ -60,7 +61,7 @@ export async function encrypt(options = {}) {
       encryptedEnv[envVar] = parsedValue;
       switch (alreadyEncryptedValue) {
         case 'ignore': continue;
-        case 'log': if (!silent) { console.log(`Environment variable "${envVar}" is already encrypted, ignoring.`); } continue;
+        case 'log': logger.info?.(`Environment variable "${envVar}" is already encrypted, ignoring.`); continue;
         case 'encrypt': break;
         case 'error': throw new Error(`Environment variable "${envVar}" is already encrypted.`);
       }
@@ -69,7 +70,7 @@ export async function encrypt(options = {}) {
     if (prf === null) {
       const { url, prf: prfPromise } = await getPrf(getPrfOptions);
       if (!getPrfOptions.autoOpen) {
-        if (!silent) { console.log(`Open this page in a web browser to complete the passkey flow: ${url}`); }
+        logger.info?.(`Open this page in a web browser to complete the passkey flow: ${url}`);
       }
       prf = await prfPromise;
       if (prf === null) {
@@ -83,9 +84,7 @@ export async function encrypt(options = {}) {
   if (outFile) {
     await writeFile(outFile, toEnvString(encryptedEnv));
   }
-  if (!silent) {
-    console.log(styleText('green', '🎉 Successfully encrypted environment variables!'));
-  }
+  logger.info?.(styleText('green', '🎉 Successfully encrypted environment variables!'));
 }
 
 /**
@@ -98,12 +97,13 @@ export async function encrypt(options = {}) {
  * @property {'ignore'|'log'|'error'} [notEncryptedValue] What to do when encountering a value
  * that is not envpass encrypted (i.e., the value is not in the format `'envpass:{version}:{string}'`).
  * - `'ignore'` will passthrough the value as-is.
- * - `'log'` will do the same as `'ignore'`, but also log the variable name to console.
+ * - `'log'` will do the same as `'ignore'`, but also log the variable name to `logger.info()`.
  * - `'error'` will throw an error.
  * 
  * The default value is `'ignore'`.
  * @property {GetPrfOptions} [getPrfOptions] Options for the passkey page and server.
- * @property {boolean} [silent] If `true`, do not log to console. The default value is `false`.
+ * @property {Logger} [logger] Logger to use to record diagnostic information. The default value is `{}` (i.e.,
+ * drop all logs).
  */
 
 /**
@@ -120,12 +120,12 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     injectInProcess = false,
     notEncryptedValue = 'ignore',
     getPrfOptions = { autoOpen: true, port: undefined },
-    silent = false
+    logger = {}
   } = options;
 
   const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
   if (Object.keys(env).length === 0) {
-    if (!silent) { console.log('No environment variables found, aborting.'); }
+    logger.info?.('No environment variables found, aborting.');
     return;
   }
 
@@ -133,7 +133,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
   /** @type {Env} */const decryptedEnv = {};
   for (const [envVar, value] of Object.entries(env)) {
     if (value === undefined) {
-      if (!silent) { console.log(`Environment variable "${envVar}" is unset, skipping decryption.`); }
+      logger.info?.(`Environment variable "${envVar}" is unset, skipping decryption.`);
       decryptedEnv[envVar] = '';
       continue;
     }
@@ -143,7 +143,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
       decryptedEnv[envVar] = value;
       switch (notEncryptedValue) {
         case 'ignore': continue;
-        case 'log': if (!silent) { console.log(`Environment variable "${envVar}" is not encrypted, ignoring.`); } continue;
+        case 'log': logger.info?.(`Environment variable "${envVar}" is not encrypted, ignoring.`); continue;
         case 'error': throw new Error(`Environment variable "${envVar}" is not encrypted.`);
       }
     }
@@ -151,7 +151,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     if (prf === null) {
       const { url, prf: prfPromise } = await getPrf(getPrfOptions);
       if (!getPrfOptions.autoOpen) {
-        if (!silent) { console.log(`Open this page in a web browser to complete the passkey flow: ${url}`); }
+        logger.info?.(`Open this page in a web browser to complete the passkey flow: ${url}`);
       }
       prf = await prfPromise;
       if (prf === null) {
@@ -172,9 +172,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
       await writeFile(outFile, toEnvString(decryptedEnv));
     }
   }
-  if (!silent) {
-    console.log(styleText('green', '🎉 Successfully decrypted environment variables!'));
-  }
+  logger.info?.(styleText('green', '🎉 Successfully decrypted environment variables!'));
   if (args.length > 0) {
     execSync(args.join(' '), { stdio: 'inherit' });
   }

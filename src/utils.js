@@ -1,4 +1,13 @@
 /**
+ * @typedef {object} Logger Logger interface for diagnostic output. Compatible with `console` and
+ * most logging libraries.
+ * @property {(...args: unknown[]) => void} [debug] Logs verbose diagnostic information.
+ * @property {(...args: unknown[]) => void} [info] Logs informational messages.
+ * @property {(...args: unknown[]) => void} [warn] Logs warnings.
+ * @property {(...args: unknown[]) => void} [error] Logs errors.
+ */
+
+/**
  * @typedef {{[key:string]:string|undefined}} Env A simple null prototype object dictionary to map environment
  * variable names to values.
  */

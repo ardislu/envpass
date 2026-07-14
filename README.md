@@ -46,10 +46,10 @@ If you can't or don't want to install the package in your project, you can insta
 npm i -g @ardislu/envpass
 ```
 
-2. Decrypt using the `--inject-in-process` (`-i`) flag (and optionally `--silent`/`-s`) before you run your desired command:
+2. Decrypt using the `--inject-in-process` (`-i`) flag before you run your desired command:
 
 ```
-envpass decrypt -is -- node index.js
+envpass decrypt -i -- node index.js
 ```
 
 ## Library usage
@@ -65,8 +65,7 @@ import { decrypt } from '@ardislu/envpass';
 
 await decrypt({
   outFile: false,
-  injectInProcess: true,
-  silent: true
+  injectInProcess: true
 });
 ```
 
@@ -96,6 +95,18 @@ const encryptionPromise = encrypt({
 controller.abort();
 ```
 
+### Log diagnostic information
+
+The same option is available for `decrypt` as well.
+
+```javascript
+import { encrypt } from '@ardislu/envpass';
+
+await encrypt({
+  logger: console // Or whatever logger library you prefer
+});
+```
+
 ## CLI reference
 
 ```
@@ -121,7 +132,6 @@ encrypt your .env file with a passkey
 Options:
   --in-file <path>   path to the unencrypted .env file (default: '.env')
   --out-file <path>  path to write the encrypted .env file to (default: value of --in-file)
-  -s, --silent       do not log anything to console
   -h, --help         display help for command
 ```
 
@@ -134,7 +144,6 @@ Options:
   --in-file <path>         path to the encrypted .env file (default: '.env')
   --out-file <path>        path to write the decrypted .env file to (default: value of --in-file)
   -i, --inject-in-process  inject the decrypted environment variables to process.env (and ignore --out-file)
-  -s, --silent             do not log anything to console
   -h, --help               display help for command
 ```
 

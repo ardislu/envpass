@@ -10,21 +10,19 @@ suite('cli', () => {
 
     const command = program.commands.find(c => c.name() === 'encrypt');
     ok(command);
-    const { inFile, outFile, silent } = command.opts();
+    const { inFile, outFile } = command.opts();
     deepStrictEqual(inFile, undefined);
     deepStrictEqual(outFile, undefined);
-    deepStrictEqual(silent, undefined);
   });
   test('envpass encrypt options work', (t) => {
     const program = makeProgram(t.mock.fn(), t.mock.fn());
-    program.parse('node envpass encrypt --in-file TEST_IN --out-file TEST_OUT --silent'.split(' '));
+    program.parse('node envpass encrypt --in-file TEST_IN --out-file TEST_OUT'.split(' '));
 
     const command = program.commands.find(c => c.name() === 'encrypt');
     ok(command);
-    const { inFile, outFile, silent } = command.opts();
+    const { inFile, outFile } = command.opts();
     deepStrictEqual(inFile, 'TEST_IN');
     deepStrictEqual(outFile, 'TEST_OUT');
-    deepStrictEqual(silent, true);
   });
   test('envpass decrypt works', (t) => {
     const program = makeProgram(t.mock.fn(), t.mock.fn());
@@ -32,32 +30,29 @@ suite('cli', () => {
 
     const command = program.commands.find(c => c.name() === 'decrypt');
     ok(command);
-    const { inFile, outFile, injectInProcess, silent } = command.opts();
+    const { inFile, outFile, injectInProcess } = command.opts();
     deepStrictEqual(inFile, undefined);
     deepStrictEqual(outFile, undefined);
     deepStrictEqual(injectInProcess, undefined);
-    deepStrictEqual(silent, undefined);
   });
   test('envpass decrypt options work', (t) => {
     const program = makeProgram(t.mock.fn(), t.mock.fn());
-    program.parse('node envpass decrypt --in-file TEST_IN --out-file TEST_OUT --inject-in-process --silent'.split(' '));
+    program.parse('node envpass decrypt --in-file TEST_IN --out-file TEST_OUT --inject-in-process'.split(' '));
 
     const command = program.commands.find(c => c.name() === 'decrypt');
     ok(command);
-    const { inFile, outFile, injectInProcess, silent } = command.opts();
+    const { inFile, outFile, injectInProcess } = command.opts();
     deepStrictEqual(inFile, 'TEST_IN');
     deepStrictEqual(outFile, 'TEST_OUT');
     deepStrictEqual(injectInProcess, true);
-    deepStrictEqual(silent, true);
   });
-  test('envpass decrypt -is works', (t) => {
+  test('envpass decrypt -i works', (t) => {
     const program = makeProgram(t.mock.fn(), t.mock.fn());
-    program.parse('node envpass decrypt -is'.split(' '));
+    program.parse('node envpass decrypt -i'.split(' '));
 
     const command = program.commands.find(c => c.name() === 'decrypt');
     ok(command);
-    const { injectInProcess, silent } = command.opts();
+    const { injectInProcess } = command.opts();
     deepStrictEqual(injectInProcess, true);
-    deepStrictEqual(silent, true);
   });
 });

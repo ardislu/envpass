@@ -3,7 +3,7 @@ import { deepStrictEqual } from 'node:assert/strict';
 import { chdir, cwd } from 'node:process';
 
 import { encrypt } from '#src/index.js';
-import { setupPlaywright, mockOpen, assertConsole, setupFolder, fileEqual, fileNotEqual } from '#test/setup.js';
+import { setupPlaywright, mockOpen, setupFolder, fileEqual, fileNotEqual } from '#test/setup.js';
 
 suite('import @ardislu/envpass/decrypt', () => {
   test('it works', async (t) => {
@@ -11,7 +11,6 @@ suite('import @ardislu/envpass/decrypt', () => {
     const { page } = await setupPlaywright(t);
     const { folder, envFile } = await setupFolder(t, env);
     mockOpen(t, page);
-    assertConsole(t, { log: 1 }); // Decrypt should be silent, so only 1 log
 
     const oldDir = cwd();
     chdir(folder);

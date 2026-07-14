@@ -21,7 +21,6 @@ export function makeProgram(encryptAction, decryptAction) {
     .description('encrypt your .env file with a passkey')
     .option('--in-file <path>', "path to the unencrypted .env file (default: '.env')")
     .option('--out-file <path>', 'path to write the encrypted .env file to (default: value of --in-file)')
-    .option('-s, --silent', 'do not log anything to console')
     .action(encryptAction);
 
   program.command('decrypt')
@@ -29,7 +28,6 @@ export function makeProgram(encryptAction, decryptAction) {
     .option('--in-file <path>', "path to the encrypted .env file (default: '.env')")
     .option('--out-file <path>', 'path to write the decrypted .env file to (default: value of --in-file)')
     .option('-i, --inject-in-process', 'inject the decrypted environment variables to process.env (and ignore --out-file)')
-    .option('-s, --silent', 'do not log anything to console')
     .allowExcessArguments(true)
     .action(decryptAction);
 

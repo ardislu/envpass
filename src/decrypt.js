@@ -14,6 +14,5 @@ import { decrypt } from '#src/index.js';
 
 await decrypt({
   outFile: false,
-  injectInProcess: true,
-  silent: true
+  injectInProcess: true
 });
