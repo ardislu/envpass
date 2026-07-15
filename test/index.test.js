@@ -25,7 +25,7 @@ suite('e2e', () => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
     mockOpen(t, page);
-    assertConsole(t, { info: 6 });
+    assertConsole(t, { debug: 6, info: 6, warn: 0, error: 0 });
 
     await fileEqual(envFile, STD_ENV);
     await encrypt({ inFile: envFile });

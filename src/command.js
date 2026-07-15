@@ -42,6 +42,7 @@ export async function encrypt(options = {}) {
   } = options;
 
   const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
+  logger.debug?.('Environment variables read and parsed.');
   if (Object.keys(env).length === 0) {
     logger.info?.('No environment variables found, aborting.');
     return;
@@ -68,18 +69,24 @@ export async function encrypt(options = {}) {
     }
 
     if (prf === null) {
+      logger.debug?.('PRF is required but not yet set, initiating passkey flow.');
       const { url, prf: prfPromise } = await getPrf(getPrfOptions);
+      logger.debug?.(`Passkey flow initiated at ${url}.`);
       prf = await prfPromise;
       if (prf === null) {
         throw new InputError('Unable to get passkey.');
       }
+      logger.debug?.('Passkey flow successfully completed and PRF set.');
     }
     const encryptedValue = await encryptRaw({ prf, value });
     encryptedEnv[envVar] = encryptedValue;
+    logger.debug?.(`Variable "${envVar}" handled.`);
   }
+  logger.debug?.('All environment variables handled.');
 
   if (outFile) {
     await writeFile(outFile, toEnvString(encryptedEnv));
+    logger.debug?.('Wrote environment variables to file.');
   }
 }
 
@@ -120,6 +127,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
   } = options;
 
   const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
+  logger.debug?.('Environment variables read and parsed.');
   if (Object.keys(env).length === 0) {
     logger.info?.('No environment variables found, aborting.');
     return;
@@ -145,27 +153,35 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     }
 
     if (prf === null) {
+      logger.debug?.('PRF is required but not yet set, initiating passkey flow.');
       const { url, prf: prfPromise } = await getPrf(getPrfOptions);
+      logger.debug?.(`Passkey flow initiated at ${url}.`);
       prf = await prfPromise;
       if (prf === null) {
         throw new InputError('Unable to get passkey.');
       }
+      logger.debug?.('Passkey flow successfully completed and PRF set.');
     }
     const decryptedValue = await decryptRaw({ prf, value: parsedValue });
     decryptedEnv[envVar] = decryptedValue;
+    logger.debug?.(`Variable "${envVar}" handled.`);
   }
+  logger.debug?.('All environment variables handled.');
 
   if (injectInProcess) {
     for (const [envVar, value] of Object.entries(decryptedEnv)) {
       process.env[envVar] = value;
     }
+    logger.debug?.('Injected environment variables to process.env.');
   }
   else {
     if (outFile) {
       await writeFile(outFile, toEnvString(decryptedEnv));
+      logger.debug?.('Wrote environment variables to file.');
     }
   }
   if (args.length > 0) {
+    logger.debug?.('Follow-on command found, executing in child process.');
     execSync(args.join(' '), { stdio: 'inherit' });
   }
 }
