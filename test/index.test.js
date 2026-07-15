@@ -58,6 +58,17 @@ suite('e2e', () => {
     await fileEqual(envFile, env);
     deepStrictEqual(openMock.mock.calls.length, 0);
   });
+  test('encrypt does nothing when env is empty', async (t) => {
+    const openMock = t.mock.method(BROWSER, 'open');
+    const env = '';
+    const envFile = await setupEnv(t, env);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+
+    await encrypt({ inFile: envFile });
+
+    await fileEqual(envFile, env);
+    deepStrictEqual(openMock.mock.calls.length, 0);
+  });
   test('decrypt does nothing when all variables are already decrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, STD_ENV);
@@ -66,6 +77,17 @@ suite('e2e', () => {
     await decrypt({ inFile: envFile });
 
     await fileEqual(envFile, STD_ENV);
+    deepStrictEqual(openMock.mock.calls.length, 0);
+  });
+  test('decrypt does nothing when env is empty', async (t) => {
+    const openMock = t.mock.method(BROWSER, 'open');
+    const env = '';
+    const envFile = await setupEnv(t, env);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+
+    await decrypt({ inFile: envFile });
+
+    await fileEqual(envFile, env);
     deepStrictEqual(openMock.mock.calls.length, 0);
   });
 });
