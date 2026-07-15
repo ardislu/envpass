@@ -124,9 +124,9 @@ export function mockOpen(t, page) {
 }
 
 /**
- * @typedef AssertConsoleCounts The total number of times `console.log`, `console.info`, `console.warn`, and
+ * @typedef AssertConsoleCounts The total number of times `console.debug`, `console.info`, `console.warn`, and
  * `console.error` are expected to be called.
- * @property {number} [log] The number of times `console.log` is expected to be called. The default value is 0.
+ * @property {number} [debug] The number of times `console.debug` is expected to be called. The default value is 0.
  * @property {number} [info] The number of times `console.info` is expected to be called. The default value is 0.
  * @property {number} [warn] The number of times `console.warn` is expected to be called. The default value is 0.
  * @property {number} [error] The number of times `console.error` is expected to be called. The default value is 0.
@@ -142,7 +142,7 @@ export function mockOpen(t, page) {
  * to be called.
  */
 export function assertConsole(t, expected = {}) {
-  const actual = { log: 0, info: 0, warn: 0, error: 0 };
+  const actual = { debug: 0, info: 0, warn: 0, error: 0 };
   expected = { ...actual, ...expected };
 
   for (const m of /** @type {Array<keyof typeof actual>} */(Object.keys(actual))) {
