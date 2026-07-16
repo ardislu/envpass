@@ -164,6 +164,11 @@ export async function getPrf(options = {}) {
         return;
       });
     }
+    // Explicitly reject all other methods
+    else {
+      response.writeHead(400).end();
+      return;
+    }
   });
 
   server.listen(port, 'localhost');

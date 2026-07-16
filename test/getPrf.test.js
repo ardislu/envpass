@@ -138,6 +138,12 @@ suite('getPrf.js (server)', () => {
     deepStrictEqual((await fetch(makePostRequest(url, { prf: Uint8Array.fromHex('11'.repeat(33)) }))).status, 400);
     deepStrictEqual((await fetch(makePostRequest(url, { prf: Uint8Array.fromHex('11'.repeat(32)) }))).status, 200);
   });
+  test('rejects all request methods that are not GET or POST', async (t) => {
+    const { url } = await setupServer(t);
+    for (const method of ['DELETE', 'HEAD', 'OPTIONS', 'PATCH', 'PUT']) {
+      deepStrictEqual((await fetch(url, { method })).status, 400);
+    }
+  });
   test('window expiration works', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] }); // MUST be called BEFORE setupServer()
     const { url } = await setupServer(t);
