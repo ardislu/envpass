@@ -96,12 +96,13 @@ export async function getPrf(options = {}) {
     if (request.method === 'GET') {
       const url = new URL(`http://localhost${request.url}`);
       if (url.searchParams.get('challenge') !== challenge) {
-        response.writeHead(401).end();
+        response.writeHead(401, { 'Content-Length': 0 }).end();
         return;
       }
       response
         .writeHead(200, {
           'Content-Type': 'text/html',
+          'Content-Length': new TextEncoder().encode(html).length,
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'no-referrer',
           'Cross-Origin-Opener-Policy': 'same-origin',
@@ -126,15 +127,15 @@ export async function getPrf(options = {}) {
         || request.headers['sec-fetch-site'] !== 'same-origin'
         || request.headers['sec-fetch-mode'] !== 'cors'
         || request.headers['sec-fetch-dest'] !== 'empty') {
-        response.writeHead(403).end();
+        response.writeHead(403, { 'Content-Length': 0 }).end();
         return;
       }
       if (request.headers['content-type'] !== 'application/octet-stream') {
-        response.writeHead(400).end();
+        response.writeHead(400, { 'Content-Length': 0 }).end();
         return;
       }
       if (request.headers['envpass-challenge'] !== challenge) {
-        response.writeHead(401).end();
+        response.writeHead(401, { 'Content-Length': 0 }).end();
         return;
       }
       // PRF is always 32 bytes, see https://w3c.github.io/webauthn/#prf-extension
@@ -144,7 +145,7 @@ export async function getPrf(options = {}) {
         try { prf.set(chunk, offset); }
         catch { // Invalid chunk or too many bytes, stop processing immediately.
           prf.fill(0);
-          response.writeHead(400).end();
+          response.writeHead(400, { 'Content-Length': 0 }).end();
           request.destroy();
           return;
         }
@@ -154,10 +155,10 @@ export async function getPrf(options = {}) {
       request.on('end', () => {
         if (offset !== 32) { // Not all 32 PRF bytes were from passkey
           prf.fill(0);
-          response.writeHead(400).end();
+          response.writeHead(400, { 'Content-Length': 0 }).end();
           return;
         }
-        response.writeHead(200).end();
+        response.writeHead(200, { 'Content-Length': 0 }).end();
         server.close();
         clearTimeout(timeoutId);
         prfResolve(prf);
@@ -166,7 +167,7 @@ export async function getPrf(options = {}) {
     }
     // Explicitly reject all other methods
     else {
-      response.writeHead(400).end();
+      response.writeHead(400, { 'Content-Length': 0 }).end();
       return;
     }
   });
