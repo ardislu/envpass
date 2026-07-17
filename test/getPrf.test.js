@@ -89,7 +89,7 @@ suite('getPrf.js (server)', () => {
     const prf = Uint8Array.fromHex('deadbeef000000000000000000000000000000000000000000000000cafebabe');
     const options = {
       method: 'POST',
-      headers: /** @type {{[key:string]:string}} */({
+      headers: /** @type {Record<string,string>} */({
         'Content-Type': 'application/octet-stream',
         'Origin': origin,
         'Sec-Fetch-Site': 'same-origin',
