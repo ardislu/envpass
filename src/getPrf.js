@@ -130,6 +130,10 @@ export async function getPrf(options = {}) {
         response.writeHead(403, { 'Content-Length': 0 }).end();
         return;
       }
+      if (request.headers['content-length'] === undefined) { // Refuse Transfer-Encoding: chunked
+        response.writeHead(411, { 'Content-Length': 0 }).end();
+        return;
+      }
       if (request.headers['content-type'] !== 'application/octet-stream') {
         response.writeHead(400, { 'Content-Length': 0 }).end();
         return;

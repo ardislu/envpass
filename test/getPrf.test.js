@@ -1,5 +1,6 @@
 import { suite, test } from 'node:test';
 import { deepStrictEqual, match, ok, rejects } from 'node:assert/strict';
+import { Readable } from 'node:stream';
 
 import { request } from 'undici';
 
@@ -118,6 +119,24 @@ suite('getPrf.js (server)', () => {
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'document' } }))).status, 403);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'embed' } }))).status, 403);
     deepStrictEqual((await fetch(makePostRequest(url, { headers: { 'Sec-Fetch-Dest': 'empty' } }))).status, 200);
+  });
+  test('rejects Transfer-Encoding: chunked on POST', async (t) => {
+    const { url } = await setupServer(t);
+    // Using the lower-level `request` instead to force Transfer-Encoding
+    const { origin, searchParams } = new URL(url);
+    const options = {
+      method: 'POST',
+      headers: /** @type {Record<string,string>} */({
+        'Content-Type': 'application/octet-stream',
+        'Origin': origin,
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Dest': 'empty',
+        'Envpass-Challenge': searchParams.get('challenge')
+      }),
+      body: Readable.from([Uint8Array.fromHex('deadbeef000000000000000000000000000000000000000000000000cafebabe')])
+    }
+    deepStrictEqual((await request(origin, options)).statusCode, 411);
   });
   test('validates Content-Type header on POST', async (t) => {
     const { url } = await setupServer(t);
