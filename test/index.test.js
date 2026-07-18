@@ -25,13 +25,13 @@ suite('e2e', () => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
     mockOpen(t, page);
-    assertConsole(t, { debug: 6, info: 6, warn: 0, error: 0 });
+    assertConsole(t, { debug: 24, info: 6, warn: 0, error: 0 });
 
     await fileEqual(envFile, STD_ENV);
-    await encrypt({ inFile: envFile });
+    await encrypt({ inFile: envFile, logger: console });
     await encrypt({ inFile: envFile, logger: console, alreadyEncryptedValue: 'log' });
     await fileNotEqual(envFile, STD_ENV);
-    await decrypt({ inFile: envFile });
+    await decrypt({ inFile: envFile, logger: console });
     await decrypt({ inFile: envFile, logger: console, notEncryptedValue: 'log' });
     await fileEqual(envFile, STD_ENV);
   });
