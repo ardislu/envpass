@@ -3,7 +3,7 @@ import { deepStrictEqual } from 'node:assert';
 
 import { encrypt, decrypt } from '#src/index.js';
 import { BROWSER } from '#src/getPrf.js';
-import { setupPlaywright, setupEnv, mockOpen, assertConsole, fileEqual, fileNotEqual } from '#test/setup.js';
+import { setupPlaywright, setupEnv, mockOpen, assertConsole, MockLogger, fileEqual, fileNotEqual } from '#test/setup.js';
 
 /** Standard value of the .env file used for most setups. */
 const STD_ENV = 'A=123\nB=456\nC=789\n';
@@ -34,6 +34,22 @@ suite('e2e', () => {
     await decrypt({ inFile: envFile, logger: console });
     await decrypt({ inFile: envFile, logger: console, notEncryptedValue: 'log' });
     await fileEqual(envFile, STD_ENV);
+  });
+  test('alternate logger works', async (t) => {
+    const { page } = await setupPlaywright(t);
+    const envFile = await setupEnv(t, STD_ENV);
+    mockOpen(t, page);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+    const logger = new MockLogger();
+
+    await fileEqual(envFile, STD_ENV);
+    await encrypt({ inFile: envFile, logger });
+    await encrypt({ inFile: envFile, logger, alreadyEncryptedValue: 'log' });
+    await fileNotEqual(envFile, STD_ENV);
+    await decrypt({ inFile: envFile, logger });
+    await decrypt({ inFile: envFile, logger, notEncryptedValue: 'log' });
+    await fileEqual(envFile, STD_ENV);
+    logger.assertCounts({ debug: 24, info: 6, warn: 0, error: 0 });
   });
   test('does nothing to empty .env file', async (t) => {
     const { page } = await setupPlaywright(t);

@@ -151,6 +151,66 @@ export function assertConsole(t, expected = {}) {
   }
 }
 
+/** @typedef {'debug'|'info'|'warn'|'error'} LoggerMethod A supported logger method. */
+/** @typedef {unknown[]} LoggerCall The arguments passed to a single logger method invocation. */
+/**
+ * @typedef Logs Captured logger calls, grouped by logger method.
+ * @property {LoggerCall[]} debug All calls made to `logger.debug()`.
+ * @property {LoggerCall[]} info All calls made to `logger.info()`.
+ * @property {LoggerCall[]} warn All calls made to `logger.warn()`.
+ * @property {LoggerCall[]} error All calls made to `logger.error()`.
+ */
+
+/**
+ * A mock `Logger` that records a simple history of calls and provides helper methods to make assertions
+ * about these calls.
+ */
+export class MockLogger {
+  /** @type {Logs} */
+  #logs = { debug: [], info: [], warn: [], error: [] };
+
+  /**
+   * Records a `debug()` call.
+   * @param {...unknown} args
+   */
+  debug(...args) { this.#logs.debug.push(args); }
+
+  /**
+   * Records a `info()` call.
+   * @param {...unknown} args
+   */
+  info(...args) { this.#logs.info.push(args); }
+
+  /**
+   * Records a `warn()` call.
+   * @param {...unknown} args
+   */
+  warn(...args) { this.#logs.warn.push(args); }
+
+  /**
+   * Records a `error()` call.
+   * @param {...unknown} args
+   */
+  error(...args) { this.#logs.error.push(args); }
+
+  /** Record of all the logs made to this logger. */
+  get logs() {
+    return this.#logs;
+  }
+
+  /**
+   * Asserts that each logger method was called the expected number of times.
+   * @param {AssertConsoleCounts} counts
+   */
+  assertCounts(counts) {
+    for (const method of /** @type {const} */(['debug', 'info', 'warn', 'error'])) {
+      const actual = this.#logs[method].length;
+      const expected = counts[method] ?? 0;
+      deepStrictEqual(actual, expected, `expected ${expected} ${method} call(s), got ${actual}`);
+    }
+  }
+}
+
 /**
  * Assert a text file's contents are equal to expected contents.
  * @param {string} path Path to a text file.
