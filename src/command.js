@@ -41,6 +41,7 @@ export async function encrypt(options = {}) {
     logger = {}
   } = options;
 
+  /** @type {Record<string, string>} */
   const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
   logger.debug?.('Environment variables read and parsed.');
   if (Object.keys(env).length === 0) {
@@ -51,12 +52,6 @@ export async function encrypt(options = {}) {
   let prf = null;
   /** @type {Env} */const encryptedEnv = Object.create(null);
   for (const [envVar, value] of Object.entries(env)) {
-    if (value === undefined) {
-      logger.info?.(`Environment variable "${envVar}" is unset, skipping encryption.`);
-      encryptedEnv[envVar] = '';
-      continue;
-    }
-
     const parsedValue = parseEnvpassEncrypted(value);
     if (parsedValue !== null) {
       encryptedEnv[envVar] = parsedValue;
