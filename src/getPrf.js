@@ -7,10 +7,24 @@ import open from 'open';
 /** @import { Bytes32 } from '#src/utils.js'; */
 
 /**
- * Wrapper around browser operations (currently, only `open`). This wrapper object is required
- * to mock the methods for testing purposes.
+ * Load from disk the HTML to be served by the passkey bridge server.
+ * @returns {Promise<string>} The HTML file to serve.
+ */
+async function getHTML() {
+  return await readFile(new URL('./getPrf.html', import.meta.url), { encoding: 'utf8' });
+}
+
+/**
+ * Wrapper around browser operations. This wrapper object is required to mock the methods for
+ * testing purposes.
  */
 export const BROWSER = { open };
+
+/**
+ * Wrapper around server operations. This wrapper object is required to mock the methods for
+ * testing purposes.
+ */
+export const SERVER = { getHTML };
 
 /**
  * 2 minutes in milliseconds. After this duration, the http server will close and the flow
@@ -58,7 +72,7 @@ export async function getPrf(options = {}) {
   const { promise: prfPromise, resolve: prfResolve } = /** @type {PromiseWithResolvers<Bytes32>}*/(Promise.withResolvers());
   const { promise: abortPromise, resolve: abortResolve } = /** @type {PromiseWithResolvers<null>}*/(Promise.withResolvers());
 
-  const html = await readFile(new URL('./getPrf.html', import.meta.url), { encoding: 'utf8' });
+  const html = await SERVER.getHTML();
 
   // Generate hashes of <style> and <script> contents for the CSP header
   const encoder = new TextEncoder();
