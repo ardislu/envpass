@@ -121,6 +121,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     logger = {}
   } = options;
 
+  /** @type {Record<string, string>} */
   const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
   logger.debug?.('Environment variables read and parsed.');
   if (Object.keys(env).length === 0) {
@@ -131,12 +132,6 @@ export async function decrypt(options = {}, { args = [] } = {}) {
   let prf = null;
   /** @type {Env} */const decryptedEnv = {};
   for (const [envVar, value] of Object.entries(env)) {
-    if (value === undefined) {
-      logger.info?.(`Environment variable "${envVar}" is unset, skipping decryption.`);
-      decryptedEnv[envVar] = '';
-      continue;
-    }
-
     const parsedValue = parseEnvpassEncrypted(value);
     if (parsedValue === null) {
       decryptedEnv[envVar] = value;
