@@ -1,5 +1,6 @@
 import { suite, test } from 'node:test';
 import { deepStrictEqual } from 'node:assert';
+import childProcess from 'node:child_process';
 
 import { encrypt, decrypt } from '#src/index.js';
 import { BROWSER } from '#src/getPrf.js';
@@ -105,5 +106,12 @@ suite('e2e', () => {
 
     await fileEqual(envFile, env);
     deepStrictEqual(openMock.mock.calls.length, 0);
+  });
+  test('decrypt passes through excess args to execute', async (t) => {
+    const execMock = t.mock.method(childProcess, 'execSync', () => { });
+    const envFile = await setupEnv(t, STD_ENV);
+
+    await decrypt({ inFile: envFile }, { args: ['test', 'test', 'test'] });
+    deepStrictEqual(execMock.mock.calls.length, 1);
   });
 });

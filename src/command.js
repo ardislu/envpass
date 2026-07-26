@@ -1,6 +1,6 @@
 import { parseEnv } from 'node:util';
 import { readFile, writeFile } from 'node:fs/promises';
-import { execSync } from 'node:child_process';
+import childProcess from 'node:child_process';
 /** @import { PathLike } from 'node:fs'; */
 
 import { getPrf } from '#src/getPrf.js';
@@ -172,6 +172,6 @@ export async function decrypt(options = {}, { args = [] } = {}) {
   }
   if (args.length > 0) {
     logger.debug?.('Follow-on command found, executing in child process.');
-    execSync(args.join(' '), { stdio: 'inherit' });
+    childProcess.execSync(args.join(' '), { stdio: 'inherit' });
   }
 }
