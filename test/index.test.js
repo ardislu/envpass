@@ -1,9 +1,9 @@
 import { suite, test } from 'node:test';
-import { deepStrictEqual } from 'node:assert';
+import { deepStrictEqual, rejects } from 'node:assert';
 import childProcess from 'node:child_process';
 
 import { encrypt, decrypt } from '#src/index.js';
-import { BROWSER } from '#src/getPrf.js';
+import { BROWSER, WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
 import { setupPlaywright, setupEnv, mockOpen, assertConsole, MockLogger, fileEqual, fileNotEqual } from '#test/setup.js';
 
 /** Standard value of the .env file used for most setups. */
@@ -86,6 +86,18 @@ suite('e2e', () => {
     await fileEqual(envFile, env);
     deepStrictEqual(openMock.mock.calls.length, 0);
   });
+  test('encrypt throws if unable to get passkey', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const { page, setAutomaticSignIn } = await setupPlaywright(t);
+    await setAutomaticSignIn(false);
+    const opened = mockOpen(t, page);
+    const envFile = await setupEnv(t, STD_ENV);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+
+    rejects(encrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
+    await opened;
+    t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
+  });
   test('decrypt does nothing when all variables are already decrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, STD_ENV);
@@ -106,6 +118,19 @@ suite('e2e', () => {
 
     await fileEqual(envFile, env);
     deepStrictEqual(openMock.mock.calls.length, 0);
+  });
+  test('decrypt throws if unable to get passkey', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const { page, setAutomaticSignIn } = await setupPlaywright(t);
+    await setAutomaticSignIn(false);
+    const opened = mockOpen(t, page);
+    const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
+    const envFile = await setupEnv(t, env);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+
+    rejects(decrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
+    await opened;
+    t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
   });
   test('decrypt passes through excess args to execute', async (t) => {
     const execMock = t.mock.method(childProcess, 'execSync', () => { });

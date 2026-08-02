@@ -115,12 +115,18 @@ export async function setupFolder(t, env = '') {
  * Intercept the `open` function to open a Playwright browser to the page instead of the user's own browser.
  * @param {TestContext} t Test context to mock the `open` function for.
  * @param {Page} page Playwright `Page` to use to navigate to the URL instead of the user's browser.
+ * @returns {Promise<void>} Promise which resolves when the Playwright browser has opened the page.
  */
 
 export function mockOpen(t, page) {
+  const { promise, resolve } = /** @type {PromiseWithResolvers<void>}*/(Promise.withResolvers());
   /** @param {string} url */
-  const interceptor = url => { page.goto(url); }
+  const interceptor = async url => {
+    await page.goto(url);
+    resolve();
+  }
   t.mock.method(BROWSER, 'open', interceptor);
+  return promise;
 }
 
 /**
