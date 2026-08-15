@@ -94,6 +94,7 @@ export async function getPrf(options = {}) {
 
   // Flow expires after 2 minutes or canceled
   const timeoutId = setTimeout(() => server.close(() => abortResolve(null)), WINDOW_EXPIRATION_DURATION);
+  const timeoutExp = Date.now() + WINDOW_EXPIRATION_DURATION;
   if (signal !== undefined) {
     signal.addEventListener('abort', () => {
       clearTimeout(timeoutId);
@@ -193,7 +194,7 @@ export async function getPrf(options = {}) {
   server.listen(port, 'localhost');
   server.on('listening', () => {
     const { port } = /** @type {AddressInfo} */(server.address());
-    const url = `http://localhost:${port}?challenge=${challenge}`;
+    const url = `http://localhost:${port}?challenge=${challenge}&exp=${timeoutExp}`;
     urlResolve(url);
     if (autoOpen) { BROWSER.open(url); }
   });

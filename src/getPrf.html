@@ -53,14 +53,13 @@
   <p>Create or select a passkey, or <button class="link">click here</button> if no prompt appeared. This window will expire in 2 minutes.</p>
 
   <script type="module">
-    // Extract and delete challenge from URL
-    const { challenge } = Object.fromEntries(new URLSearchParams(location.search));
+    const { challenge, exp } = Object.fromEntries(new URLSearchParams(location.search));
     history.replaceState(null, '', location.pathname);
 
     const p = document.querySelector('p');
 
-    const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
-    const timeoutId = setTimeout(() => p.textContent = 'This window has expired.', WINDOW_EXPIRATION_DURATION);
+    const expiration = Number(exp) - Date.now();
+    const timeoutId = setTimeout(() => p.textContent = 'This window has expired.', expiration);
 
     async function createPrf(signal) {
       signal.throwIfAborted();

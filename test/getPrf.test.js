@@ -224,6 +224,20 @@ suite('getPrf.html (client)', () => {
     await page.clock.runFor(WINDOW_EXPIRATION_DURATION);
     match(await page.locator('p').textContent() ?? '', /^This window has expired/);
   });
+  test('window expiration is calculated from a set date, not from hardcoded duration', async (t) => {
+    const { setAutomaticSignIn, page } = await setupPlaywright(t);
+    const { url } = await setupServer(t);
+
+    await setAutomaticSignIn(false);
+
+    await page.clock.install();
+    await page.clock.runFor(WINDOW_EXPIRATION_DURATION / 2);
+    await page.goto(url);
+
+    match(await page.locator('p').textContent() ?? '', /^Create or select a passkey/);
+    await page.clock.runFor(WINDOW_EXPIRATION_DURATION / 2);
+    match(await page.locator('p').textContent() ?? '', /^This window has expired/);
+  });
   test('create passkey on page load works', async (t) => {
     const { page } = await setupPlaywright(t);
     const { url, prf } = await setupServer(t);
