@@ -168,6 +168,24 @@ suite('decrypt', () => {
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
   });
+  test('injects environment variables', async (t) => {
+    const envFile = await setupEnv(t, 'INJECTION_TEST=INJECTED');
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+
+    deepStrictEqual(process.env.INJECTION_TEST, undefined);
+    await decrypt({ inFile: envFile, injectInProcess: true });
+    deepStrictEqual(process.env.INJECTION_TEST, 'INJECTED');
+    delete process.env.INJECTION_TEST;
+  });
+  test('injects environment variables (with logs)', async (t) => {
+    const envFile = await setupEnv(t, 'INJECTION_TEST=INJECTED');
+    assertConsole(t, { debug: 3, info: 0, warn: 0, error: 0 });
+
+    deepStrictEqual(process.env.INJECTION_TEST, undefined);
+    await decrypt({ inFile: envFile, injectInProcess: true, logger: console });
+    deepStrictEqual(process.env.INJECTION_TEST, 'INJECTED');
+    delete process.env.INJECTION_TEST;
+  });
   test('passes through excess args to execute', async (t) => {
     const execMock = t.mock.method(childProcess, 'execSync', () => { });
     const envFile = await setupEnv(t, STD_ENV);
