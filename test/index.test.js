@@ -65,6 +65,16 @@ suite('encrypt', () => {
     await encrypt({ inFile: envFile });
     await fileEqual(envFile, '');
   });
+  test('does nothing to empty .env file (with logs)', async (t) => {
+    const { page } = await setupPlaywright(t);
+    const envFile = await setupEnv(t, '');
+    mockOpen(t, page);
+    assertConsole(t, { debug: 1, info: 1, warn: 0, error: 0 });
+
+    await fileEqual(envFile, '');
+    await encrypt({ inFile: envFile, logger: console });
+    await fileEqual(envFile, '');
+  });
   test('does nothing when all variables are already encrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
@@ -119,6 +129,16 @@ suite('decrypt', () => {
     await decrypt({ inFile: envFile });
     await fileEqual(envFile, '');
   });
+  test('does nothing to empty .env file (with logs)', async (t) => {
+    const { page } = await setupPlaywright(t);
+    const envFile = await setupEnv(t, '');
+    mockOpen(t, page);
+    assertConsole(t, { debug: 1, info: 1, warn: 0, error: 0 });
+
+    await fileEqual(envFile, '');
+    await decrypt({ inFile: envFile, logger: console });
+    await fileEqual(envFile, '');
+  });
   test('does nothing when all variables are already decrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, STD_ENV);
@@ -151,8 +171,17 @@ suite('decrypt', () => {
   test('passes through excess args to execute', async (t) => {
     const execMock = t.mock.method(childProcess, 'execSync', () => { });
     const envFile = await setupEnv(t, STD_ENV);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await decrypt({ inFile: envFile }, { args: ['test', 'test', 'test'] });
+    deepStrictEqual(execMock.mock.calls.length, 1);
+  });
+  test('passes through excess args to execute (with logs)', async (t) => {
+    const execMock = t.mock.method(childProcess, 'execSync', () => { });
+    const envFile = await setupEnv(t, STD_ENV);
+    assertConsole(t, { debug: 4, info: 0, warn: 0, error: 0 });
+
+    await decrypt({ inFile: envFile, logger: console }, { args: ['test', 'test', 'test'] });
     deepStrictEqual(execMock.mock.calls.length, 1);
   });
 });
