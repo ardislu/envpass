@@ -52,6 +52,9 @@ suite('e2e', () => {
     await fileEqual(envFile, STD_ENV);
     logger.assertCounts({ debug: 24, info: 6, warn: 0, error: 0 });
   });
+});
+
+suite('encrypt', () => {
   test('does nothing to empty .env file', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
@@ -61,10 +64,8 @@ suite('e2e', () => {
     await fileEqual(envFile, '');
     await encrypt({ inFile: envFile });
     await fileEqual(envFile, '');
-    await decrypt({ inFile: envFile });
-    await fileEqual(envFile, '');
   });
-  test('encrypt does nothing when all variables are already encrypted', async (t) => {
+  test('does nothing when all variables are already encrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
     const envFile = await setupEnv(t, env);
@@ -75,7 +76,7 @@ suite('e2e', () => {
     await fileEqual(envFile, env);
     deepStrictEqual(openMock.mock.calls.length, 0);
   });
-  test("encrypt encrypts again when alreadyEncryptedValue: 'encrypt'", async (t) => {
+  test("encrypts again when alreadyEncryptedValue: 'encrypt'", async (t) => {
     const { page } = await setupPlaywright(t);
     const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
     const envFile = await setupEnv(t, env);
@@ -86,25 +87,14 @@ suite('e2e', () => {
 
     await fileNotEqual(envFile, env);
   });
-  test("encrypt throws when alreadyEncryptedValue: 'error'", async (t) => {
+  test("throws when alreadyEncryptedValue: 'error'", async (t) => {
     const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
     const envFile = await setupEnv(t, env);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await rejects(encrypt({ inFile: envFile, alreadyEncryptedValue: 'error' }), /Environment variable \".+\" is already encrypted\./);
   });
-  test('encrypt does nothing when env is empty', async (t) => {
-    const openMock = t.mock.method(BROWSER, 'open');
-    const env = '';
-    const envFile = await setupEnv(t, env);
-    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
-
-    await encrypt({ inFile: envFile });
-
-    await fileEqual(envFile, env);
-    deepStrictEqual(openMock.mock.calls.length, 0);
-  });
-  test('encrypt throws if unable to get passkey', async (t) => {
+  test('throws if unable to get passkey', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const { page, setAutomaticSignIn } = await setupPlaywright(t);
     await setAutomaticSignIn(false);
@@ -116,7 +106,20 @@ suite('e2e', () => {
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
   });
-  test('decrypt does nothing when all variables are already decrypted', async (t) => {
+});
+
+suite('decrypt', () => {
+  test('does nothing to empty .env file', async (t) => {
+    const { page } = await setupPlaywright(t);
+    const envFile = await setupEnv(t, '');
+    mockOpen(t, page);
+    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+
+    await fileEqual(envFile, '');
+    await decrypt({ inFile: envFile });
+    await fileEqual(envFile, '');
+  });
+  test('does nothing when all variables are already decrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, STD_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
@@ -126,24 +129,13 @@ suite('e2e', () => {
     await fileEqual(envFile, STD_ENV);
     deepStrictEqual(openMock.mock.calls.length, 0);
   });
-  test("decrypt throws error when notEncryptedValue='error'", async (t) => {
+  test("throws error when notEncryptedValue='error'", async (t) => {
     const envFile = await setupEnv(t, STD_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await rejects(decrypt({ inFile: envFile, notEncryptedValue: 'error' }), /Environment variable \".+\" is not encrypted\./);
   });
-  test('decrypt does nothing when env is empty', async (t) => {
-    const openMock = t.mock.method(BROWSER, 'open');
-    const env = '';
-    const envFile = await setupEnv(t, env);
-    assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
-
-    await decrypt({ inFile: envFile });
-
-    await fileEqual(envFile, env);
-    deepStrictEqual(openMock.mock.calls.length, 0);
-  });
-  test('decrypt throws if unable to get passkey', async (t) => {
+  test('throws if unable to get passkey', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const { page, setAutomaticSignIn } = await setupPlaywright(t);
     await setAutomaticSignIn(false);
@@ -156,7 +148,7 @@ suite('e2e', () => {
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
   });
-  test('decrypt passes through excess args to execute', async (t) => {
+  test('passes through excess args to execute', async (t) => {
     const execMock = t.mock.method(childProcess, 'execSync', () => { });
     const envFile = await setupEnv(t, STD_ENV);
 
