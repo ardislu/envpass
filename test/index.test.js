@@ -8,6 +8,10 @@ import { setupPlaywright, setupEnv, mockOpen, assertConsole, MockLogger, fileEqu
 
 /** Standard value of the .env file used for most setups. */
 const STD_ENV = 'A=123\nB=456\nC=789\n';
+/** Mock encrypted .env file. */
+const ENCRYPTED_ENV = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
+/** Single .env value for injection tests. */
+const INJECTED_ENV = 'INJECTION_TEST=INJECTED';
 
 suite('e2e', () => {
   test('encrypt and decrypt .env', async (t) => {
@@ -77,29 +81,26 @@ suite('encrypt', () => {
   });
   test('does nothing when all variables are already encrypted', async (t) => {
     const openMock = t.mock.method(BROWSER, 'open');
-    const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
-    const envFile = await setupEnv(t, env);
+    const envFile = await setupEnv(t, ENCRYPTED_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await encrypt({ inFile: envFile });
 
-    await fileEqual(envFile, env);
+    await fileEqual(envFile, ENCRYPTED_ENV);
     deepStrictEqual(openMock.mock.calls.length, 0);
   });
   test("encrypts again when alreadyEncryptedValue: 'encrypt'", async (t) => {
     const { page } = await setupPlaywright(t);
-    const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
-    const envFile = await setupEnv(t, env);
+    const envFile = await setupEnv(t, ENCRYPTED_ENV);
     mockOpen(t, page);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await encrypt({ inFile: envFile, alreadyEncryptedValue: 'encrypt' });
 
-    await fileNotEqual(envFile, env);
+    await fileNotEqual(envFile, ENCRYPTED_ENV);
   });
   test("throws when alreadyEncryptedValue: 'error'", async (t) => {
-    const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
-    const envFile = await setupEnv(t, env);
+    const envFile = await setupEnv(t, ENCRYPTED_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await rejects(encrypt({ inFile: envFile, alreadyEncryptedValue: 'error' }), /Environment variable \".+\" is already encrypted\./);
@@ -169,7 +170,7 @@ suite('decrypt', () => {
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
   });
   test('injects environment variables', async (t) => {
-    const envFile = await setupEnv(t, 'INJECTION_TEST=INJECTED');
+    const envFile = await setupEnv(t, INJECTED_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     deepStrictEqual(process.env.INJECTION_TEST, undefined);
@@ -178,7 +179,7 @@ suite('decrypt', () => {
     delete process.env.INJECTION_TEST;
   });
   test('injects environment variables (with logs)', async (t) => {
-    const envFile = await setupEnv(t, 'INJECTION_TEST=INJECTED');
+    const envFile = await setupEnv(t, INJECTED_ENV);
     assertConsole(t, { debug: 3, info: 0, warn: 0, error: 0 });
 
     deepStrictEqual(process.env.INJECTION_TEST, undefined);
