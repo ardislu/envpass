@@ -41,8 +41,9 @@ export async function encrypt(options = {}) {
     logger = {}
   } = options;
 
-  /** @type {Record<string, string>} */
-  const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
+  const env = /** @type {Record<string, string>} */ (
+    await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv)
+  );
   logger.debug?.('Environment variables read and parsed.');
   if (Object.keys(env).length === 0) {
     logger.info?.('No environment variables found, aborting.');
@@ -121,8 +122,9 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     logger = {}
   } = options;
 
-  /** @type {Record<string, string>} */
-  const env = await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv);
+  const env = /** @type {Record<string, string>} */ (
+    await readFile(inFile, { encoding: 'utf-8' }).then(parseEnv)
+  );
   logger.debug?.('Environment variables read and parsed.');
   if (Object.keys(env).length === 0) {
     logger.info?.('No environment variables found, aborting.');
