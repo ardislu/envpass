@@ -44,6 +44,10 @@ export const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000;
 /**
  * @typedef {Object} GetPrfResult
  * @property {string} url URL on `localhost` to open to complete the passkey flow.
+ * @property {string} challenge Randomly generated challenge bytes, as a hex string. This string MUST be included
+ * in the bridge's POST request as the `Envpass-Challenge` header, or the server will reject the request.
+ * @property {number} exp The expiration datetime of this flow in milliseconds. After this datetime, the server will
+ * shut down and not receive any more requests. You can pass this number directly to the `Date` constructor.
  * @property {Promise<Bytes32|null>} prf 32-byte value returned from the user passkey's pseudo random
  * function, or `null` if the flow was aborted or timed out before the PRF was executed.
  */
@@ -201,6 +205,8 @@ export async function getPrf(options = {}) {
 
   return {
     url: await urlPromise,
+    challenge,
+    exp: timeoutExp,
     prf: Promise.any([prfPromise, abortPromise])
   };
 }
