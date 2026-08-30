@@ -103,7 +103,7 @@ suite('encrypt', () => {
     const envFile = await setupEnv(t, ENCRYPTED_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
-    await rejects(encrypt({ inFile: envFile, alreadyEncryptedValue: 'error' }), /Environment variable \".+\" is already encrypted\./);
+    await rejects(encrypt({ inFile: envFile, alreadyEncryptedValue: 'error' }), /Environment variable ".+" is already encrypted\./);
   });
   test('throws if unable to get passkey', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
@@ -154,7 +154,7 @@ suite('decrypt', () => {
     const envFile = await setupEnv(t, STD_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
-    await rejects(decrypt({ inFile: envFile, notEncryptedValue: 'error' }), /Environment variable \".+\" is not encrypted\./);
+    await rejects(decrypt({ inFile: envFile, notEncryptedValue: 'error' }), /Environment variable ".+" is not encrypted\./);
   });
   test('throws if unable to get passkey', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
