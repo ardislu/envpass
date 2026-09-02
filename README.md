@@ -28,6 +28,12 @@ This command will automatically open a web browser to trigger the "sign in with 
 import '@ardislu/envpass/decrypt';
 ```
 
+Alternatively, you can use the [`--import` flag](https://nodejs.org/download/release/latest/docs/api/cli.html#--importmodule) to load the module without changing your code:
+
+```
+node --import "@ardislu/envpass/decrypt" index.js
+```
+
 This is a side effect only import which will run the `decrypt` function with default settings. When it is run, it will open a web browser to trigger the "sign in with passkey" flow where you can select the same passkey you used to encrypt your variables. It will use the passkey to decrypt and set the variables in `process.env` for the remainder of the process.
 
 3. To decrypt and overwrite your `.env` file with the decrypted values (i.e., undo `npx envpass encrypt`), run:
