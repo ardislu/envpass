@@ -48,7 +48,7 @@ const ENVPASS_VERSIONS = /** @type {const} */(['v1']);
  * @returns {value is EnvpassEncryptedValue}
  */
 function isEnvpassEncrypted(value) {
-  return new RegExp(`^envpass:${ENVPASS_VERSIONS.join('|')}:.+`).test(value);
+  return new RegExp(`^envpass:(${ENVPASS_VERSIONS.join('|')}):.+`).test(value);
 }
 
 /**

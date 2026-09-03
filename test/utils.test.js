@@ -30,10 +30,14 @@ suite('parseEnvpassEncrypted', { concurrency: true }, () => {
     { name: 'rejects empty', input: '' },
     { name: 'rejects empty with colons', input: '::' },
     { name: 'rejects missing magic', input: ':v1:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
+    { name: 'rejects missing magic without colon', input: 'v1:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
     { name: 'rejects missing version', input: 'envpass::rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
+    { name: 'rejects missing version without colon', input: 'envpass:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
     { name: 'rejects missing string', input: 'envpass:v1:' },
+    { name: 'rejects missing string without colon', input: 'envpass:v1' },
     { name: 'rejects invalid magic', input: 'INVALID:v1:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
     { name: 'rejects invalid version', input: 'envpass:INVALID:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
+    { name: 'rejects invalid version with valid first characters', input: 'envpass:v111111111:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
     { name: 'rejects leading whitespace', input: ' envpass:v1:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
   ];
   for (const { name, input } of rejects) {
