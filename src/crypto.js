@@ -55,7 +55,7 @@ export async function encryptRaw(options) {
   }
 
   if (typeof value !== 'string') {
-    throw new TypeError(`Value "${value}" is not a string.`);
+    throw new TypeError(`Value "${JSON.stringify(value)}" is not a string.`);
   }
 
   if (version === 'v1') {
@@ -108,11 +108,16 @@ export async function encryptRaw(options) {
  */
 export async function decryptRaw(options) {
   const { prf, value } = options;
-  const [magic, version, valueBase64] = value.split(':');
 
   if (!ArrayBuffer.isView(prf) && !(prf instanceof ArrayBuffer)) {
     throw new TypeError(`prf "${prf}" is not an ArrayBuffer or Uint8Array.`);
   }
+
+  if (typeof value !== 'string') {
+    throw new TypeError(`Value "${JSON.stringify(value)}" is not a string.`);
+  }
+
+  const [magic, version, valueBase64] = value.split(':');
 
   if (magic !== 'envpass') {
     throw new TypeError(`Value "${value}" is not an envpass encrypted value.`);
