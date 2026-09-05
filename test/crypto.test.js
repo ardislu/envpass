@@ -21,7 +21,7 @@ suite('encryptRaw', { concurrency: true }, () => {
   });
   test('throws on invalid prf', { concurrency: true }, () => {
     // @ts-expect-error
-    rejects(encryptRaw({ version, prf: 'INVALID', value }, { name: 'TypeError', message: 'prf "INVALID" is not an ArrayBuffer or Uint8Array.' }));
+    rejects(encryptRaw({ version, prf: 'INVALID', value }), { name: 'TypeError', message: 'prf "INVALID" is not an ArrayBuffer or Uint8Array.' });
   });
   test('throws on invalid value', { concurrency: true }, () => {
     // @ts-expect-error
