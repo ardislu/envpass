@@ -1,5 +1,5 @@
 import { suite, test } from 'node:test';
-import { deepStrictEqual, rejects } from 'node:assert/strict';
+import { deepStrictEqual, notDeepStrictEqual, rejects } from 'node:assert/strict';
 
 import { encryptRaw, decryptRaw } from '#src/crypto.js';
 
@@ -26,6 +26,12 @@ suite('encryptRaw', { concurrency: true }, () => {
   test('throws on invalid value', { concurrency: true }, async () => {
     // @ts-expect-error
     await rejects(encryptRaw({ version, prf, value: {} }), { name: 'TypeError', message: 'Value "{}" is not a string.' });
+  });
+  test('output value does not have base64 padding', { concurrency: true }, async () => {
+    for (const value of ['', 'a', 'aa', 'aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa']) {
+      const output = await encryptRaw({ version, prf, value });
+      notDeepStrictEqual(output.at(-1), '=');
+    }
   });
 });
 
