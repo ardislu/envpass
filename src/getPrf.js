@@ -10,15 +10,9 @@ import open from 'open';
  * Load from disk the HTML to be served by the passkey bridge server.
  * @returns {Promise<string>} The HTML file to serve.
  */
-async function getHTML() {
+export async function getHTMLFromFile() {
   return await readFile(new URL('./getPrf.html', import.meta.url), { encoding: 'utf8' });
 }
-
-/**
- * Wrapper around server operations. This wrapper object is required to mock the methods for
- * testing purposes.
- */
-export const SERVER = { getHTML };
 
 /**
  * 2 minutes in milliseconds. After this duration, the http server will close and the flow
@@ -28,6 +22,8 @@ export const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000;
 
 /**
  * @typedef {Object} GetPrfOptions
+ * @property {() => string} [getHTML] Function which returns the HTML to serve as the passkey page. The default value
+ * is a function that reads a local `getPrf.html` file from disk and returns it as a string.
  * @property {((url: string) => unknown)|null} [onListening] Function which will be called after the server is ready.
  * The function is passed a URL on `localhost` to complete the passkey flow. The default value is
  * {@link https://github.com/sindresorhus/open|`open`}, which will open the default web browser to the passkey page.
@@ -59,6 +55,7 @@ export const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000;
  */
 export async function getPrf(options = {}) {
   const {
+    getHTML = getHTMLFromFile,
     onListening = open,
     port = undefined,
     signal = undefined
@@ -72,7 +69,7 @@ export async function getPrf(options = {}) {
   const { promise: prfPromise, resolve: prfResolve } = /** @type {PromiseWithResolvers<Bytes32>}*/(Promise.withResolvers());
   const { promise: abortPromise, resolve: abortResolve } = /** @type {PromiseWithResolvers<null>}*/(Promise.withResolvers());
 
-  const html = await SERVER.getHTML();
+  const html = await getHTML();
 
   // Generate hashes of <style> and <script> contents for the CSP header
   const encoder = new TextEncoder();

@@ -8,7 +8,7 @@ import { chromium } from 'playwright-core';
 /** @import { Page } from 'playwright-core'; */
 
 import { getPrf } from '#src/getPrf.js';
-/** @import { GetPrfResult } from '#src/getPrf.js'; */
+/** @import { GetPrfOptions, GetPrfResult } from '#src/getPrf.js'; */
 
 /**
  * @typedef {Object} SetupPlaywrightOptions
@@ -62,11 +62,12 @@ export async function setupPlaywright(t, options = {}) {
 /**
  * Setup an HTTP server to orchestrate a passkey flow, with appropriate teardown hook.
  * @param {TestContext} t Test context to add `after` hook to.
+ * @param {GetPrfOptions} [getPrfOptions] Options for the passkey page and server.
  * @returns {Promise<Pick<GetPrfResult,'url'|'prf'>&SetupServerResult>}>}
  */
-export async function setupServer(t) {
+export async function setupServer(t, getPrfOptions = {}) {
   const controller = new AbortController();
-  const { url, prf } = await getPrf({ onListening: null, signal: controller.signal });
+  const { url, prf } = await getPrf({ onListening: null, signal: controller.signal, ...getPrfOptions });
   t.after(() => controller.abort());
   return { controller, url, prf };
 }

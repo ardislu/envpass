@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 
 import { request } from 'undici';
 
-import { SERVER, WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
+import { getHTMLFromFile, WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
 import { setupPlaywright, setupServer } from '#test/setup.js';
 
 /**
@@ -56,16 +56,14 @@ function makePostRequest(url, options = {}) {
 
 suite('getPrf.js (server)', () => {
   test('validates <style> tag is present in HTML template', async (t) => {
-    const html = await SERVER.getHTML();
+    const html = await getHTMLFromFile();
     const modified = html.replaceAll('<style>', '');
-    t.mock.method(SERVER, 'getHTML', () => modified);
-    await rejects(setupServer(t), { message: 'Could not find <style> tag in getPrf.html file.' });
+    await rejects(setupServer(t, { getHTML: () => modified }), { message: 'Could not find <style> tag in getPrf.html file.' });
   });
   test('validates <script> tag is present in HTML template', async (t) => {
-    const html = await SERVER.getHTML();
+    const html = await getHTMLFromFile();
     const modified = html.replaceAll('<script type="module">', '');
-    t.mock.method(SERVER, 'getHTML', () => modified);
-    await rejects(setupServer(t), { message: 'Could not find <script> tag in getPrf.html file.' });
+    await rejects(setupServer(t, { getHTML: () => modified }), { message: 'Could not find <script> tag in getPrf.html file.' });
   });
   test('valid GET works', async (t) => {
     const { url } = await setupServer(t);
