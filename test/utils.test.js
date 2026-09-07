@@ -11,13 +11,13 @@ suite('toEnvString', { concurrency: true }, () => {
     { name: 'simple object', obj: { a: '1', b: '2', c: '3' }, str: 'a=1\nb=2\nc=3\n' },
   ];
   for (const { name, obj, str } of vectors) {
-    test(`converts: ${name}`, { concurrency: true }, () => {
+    test(`converts: ${name}`, () => {
       deepStrictEqual(toEnvString(obj), str);
     });
-    test(`inverses parseEnv for: ${name}`, { concurrency: true }, () => {
+    test(`inverses parseEnv for: ${name}`, () => {
       deepStrictEqual(toEnvString(parseEnv(str)), str);
     });
-    test(`is inverse of parseEnv for: ${name}`, { concurrency: true }, () => {
+    test(`is inverse of parseEnv for: ${name}`, () => {
       const env = Object.create(null);
       Object.assign(env, obj);
       deepStrictEqual(parseEnv(toEnvString(env)), env);
@@ -41,7 +41,7 @@ suite('parseEnvpassEncrypted', { concurrency: true }, () => {
     { name: 'rejects leading whitespace', input: ' envpass:v1:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
   ];
   for (const { name, input } of rejects) {
-    test(name, { concurrency: true }, () => {
+    test(name, () => {
       deepStrictEqual(parseEnvpassEncrypted(input), null);
     });
   }
@@ -49,23 +49,23 @@ suite('parseEnvpassEncrypted', { concurrency: true }, () => {
     { name: 'accepts envpass encrypted string', input: 'envpass:v1:rXAhBNXZFsLl8EtZm3GHAZttZyLYP3j97Yy4qly53wBodRyyKYi8PlxjOlggc7mVLA/HoME4QSKdhuEs3C4UKvo0J3ZAV+JbrzfZbsBJ3tvvG4/UEVxB1+0IPoUyjhoO' },
   ];
   for (const { name, input } of accepts) {
-    test(name, { concurrency: true }, () => {
+    test(name, () => {
       deepStrictEqual(parseEnvpassEncrypted(input), input);
     });
   }
 });
 
 suite('InputError', { concurrency: true }, () => {
-  test('is throwable', { concurrency: true }, () => {
+  test('is throwable', () => {
     throws(() => { throw new InputError(); }, InputError);
   });
-  test('inherits Error', { concurrency: true }, () => {
+  test('inherits Error', () => {
     ok(new InputError() instanceof Error);
   });
-  test('sets name to "InputError"', { concurrency: true }, () => {
+  test('sets name to "InputError"', () => {
     deepStrictEqual(new InputError().name, 'InputError');
   });
-  test('accepts string message', { concurrency: true }, () => {
+  test('accepts string message', () => {
     const msg = 'TEST';
     deepStrictEqual(new InputError(msg).message, msg);
   });
