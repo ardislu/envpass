@@ -113,32 +113,13 @@ export async function setupFolder(t, env = '') {
 }
 
 /**
- * @typedef AssertConsoleCounts The total number of times `console.debug`, `console.info`, `console.warn`, and
- * `console.error` are expected to be called.
- * @property {number} [debug] The number of times `console.debug` is expected to be called. The default value is 0.
- * @property {number} [info] The number of times `console.info` is expected to be called. The default value is 0.
- * @property {number} [warn] The number of times `console.warn` is expected to be called. The default value is 0.
- * @property {number} [error] The number of times `console.error` is expected to be called. The default value is 0.
+ * @typedef AssertLoggerCounts The total number of times `Logger.debug`, `Logger.info`, `Logger.warn`, and
+ * `Logger.error` are expected to be called.
+ * @property {number} [debug] The number of times `Logger.debug` is expected to be called. The default value is 0.
+ * @property {number} [info] The number of times `Logger.info` is expected to be called. The default value is 0.
+ * @property {number} [warn] The number of times `Logger.warn` is expected to be called. The default value is 0.
+ * @property {number} [error] The number of times `Logger.error` is expected to be called. The default value is 0.
  */
-
-/**
- * Silences console functions during a test and asserts a given number of calls were made during the test. 
- * 
- * Console will only be silenced AFTER this function is called, and only until the test ends. Call this
- * function early in the test to avoid unexpected console calls.
- * @param {TestContext} t Test context to mock the `console` functions for.
- * @param {AssertConsoleCounts} [expected] Counts for the total number of times console functions are expected
- * to be called.
- */
-export function assertConsole(t, expected = {}) {
-  const actual = { debug: 0, info: 0, warn: 0, error: 0 };
-  expected = { ...actual, ...expected };
-
-  for (const m of /** @type {Array<keyof typeof actual>} */(Object.keys(actual))) {
-    t.mock.method(console, m, () => actual[m]++);
-    t.after(() => deepStrictEqual(actual[m], expected[m], `expected ${expected[m]} console.${m} calls, got ${actual[m]}`));
-  }
-}
 
 /** @typedef {'debug'|'info'|'warn'|'error'} LoggerMethod A supported logger method. */
 /** @typedef {unknown[]} LoggerCall The arguments passed to a single logger method invocation. */
@@ -189,7 +170,7 @@ export class MockLogger {
 
   /**
    * Asserts that each logger method was called the expected number of times.
-   * @param {AssertConsoleCounts} counts
+   * @param {AssertLoggerCounts} counts
    */
   assertCounts(counts) {
     for (const method of /** @type {const} */(['debug', 'info', 'warn', 'error'])) {
