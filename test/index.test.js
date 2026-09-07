@@ -3,8 +3,8 @@ import { deepStrictEqual, rejects } from 'node:assert';
 import childProcess from 'node:child_process';
 
 import { encrypt, decrypt } from '#src/index.js';
-import { BROWSER, WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
-import { setupPlaywright, setupEnv, mockOpen, assertConsole, MockLogger, fileEqual, fileNotEqual } from '#test/setup.js';
+import { WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
+import { setupPlaywright, setupEnv, assertConsole, MockLogger, fileEqual, fileNotEqual } from '#test/setup.js';
 
 /** Standard value of the .env file used for most setups. */
 const STD_ENV = 'A=123\nB=456\nC=789\n';
@@ -17,42 +17,39 @@ suite('e2e', () => {
   test('encrypt and decrypt .env', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
-    mockOpen(t, page);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await fileEqual(envFile, STD_ENV);
-    await encrypt({ inFile: envFile });
+    await encrypt({ inFile: envFile, getPrfOptions: { onListening: url => page.goto(url) } });
     await fileNotEqual(envFile, STD_ENV);
-    await decrypt({ inFile: envFile });
+    await decrypt({ inFile: envFile, getPrfOptions: { onListening: url => page.goto(url) } });
     await fileEqual(envFile, STD_ENV);
   });
   test('console logger works', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
-    mockOpen(t, page);
     assertConsole(t, { debug: 24, info: 6, warn: 0, error: 0 });
 
     await fileEqual(envFile, STD_ENV);
-    await encrypt({ inFile: envFile, logger: console });
-    await encrypt({ inFile: envFile, logger: console, alreadyEncryptedValue: 'log' });
+    await encrypt({ inFile: envFile, logger: console, getPrfOptions: { onListening: url => page.goto(url) } });
+    await encrypt({ inFile: envFile, logger: console, alreadyEncryptedValue: 'log', getPrfOptions: { onListening: url => page.goto(url) } });
     await fileNotEqual(envFile, STD_ENV);
-    await decrypt({ inFile: envFile, logger: console });
-    await decrypt({ inFile: envFile, logger: console, notEncryptedValue: 'log' });
+    await decrypt({ inFile: envFile, logger: console, getPrfOptions: { onListening: url => page.goto(url) } });
+    await decrypt({ inFile: envFile, logger: console, notEncryptedValue: 'log', getPrfOptions: { onListening: url => page.goto(url) } });
     await fileEqual(envFile, STD_ENV);
   });
   test('alternate logger works', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
-    mockOpen(t, page);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
     const logger = new MockLogger();
 
     await fileEqual(envFile, STD_ENV);
-    await encrypt({ inFile: envFile, logger });
-    await encrypt({ inFile: envFile, logger, alreadyEncryptedValue: 'log' });
+    await encrypt({ inFile: envFile, logger, getPrfOptions: { onListening: url => page.goto(url) } });
+    await encrypt({ inFile: envFile, logger, alreadyEncryptedValue: 'log', getPrfOptions: { onListening: url => page.goto(url) } });
     await fileNotEqual(envFile, STD_ENV);
-    await decrypt({ inFile: envFile, logger });
-    await decrypt({ inFile: envFile, logger, notEncryptedValue: 'log' });
+    await decrypt({ inFile: envFile, logger, getPrfOptions: { onListening: url => page.goto(url) } });
+    await decrypt({ inFile: envFile, logger, notEncryptedValue: 'log', getPrfOptions: { onListening: url => page.goto(url) } });
     await fileEqual(envFile, STD_ENV);
     logger.assertCounts({ debug: 24, info: 6, warn: 0, error: 0 });
   });
@@ -62,40 +59,35 @@ suite('encrypt', () => {
   test('does nothing to empty .env file', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
-    mockOpen(t, page);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await fileEqual(envFile, '');
-    await encrypt({ inFile: envFile });
+    await encrypt({ inFile: envFile, getPrfOptions: { onListening: url => page.goto(url) } });
     await fileEqual(envFile, '');
   });
   test('does nothing to empty .env file (with logs)', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
-    mockOpen(t, page);
     assertConsole(t, { debug: 1, info: 1, warn: 0, error: 0 });
 
     await fileEqual(envFile, '');
-    await encrypt({ inFile: envFile, logger: console });
+    await encrypt({ inFile: envFile, logger: console, getPrfOptions: { onListening: url => page.goto(url) } });
     await fileEqual(envFile, '');
   });
   test('does nothing when all variables are already encrypted', async (t) => {
-    const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, ENCRYPTED_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await encrypt({ inFile: envFile });
 
     await fileEqual(envFile, ENCRYPTED_ENV);
-    deepStrictEqual(openMock.mock.calls.length, 0);
   });
   test("encrypts again when alreadyEncryptedValue: 'encrypt'", async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, ENCRYPTED_ENV);
-    mockOpen(t, page);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
-    await encrypt({ inFile: envFile, alreadyEncryptedValue: 'encrypt' });
+    await encrypt({ inFile: envFile, alreadyEncryptedValue: 'encrypt', getPrfOptions: { onListening: url => page.goto(url) } });
 
     await fileNotEqual(envFile, ENCRYPTED_ENV);
   });
@@ -109,11 +101,16 @@ suite('encrypt', () => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const { page, setAutomaticSignIn } = await setupPlaywright(t);
     await setAutomaticSignIn(false);
-    const opened = mockOpen(t, page);
     const envFile = await setupEnv(t, STD_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+    const { promise: opened, resolve } = /** @type {PromiseWithResolvers<void>}*/(Promise.withResolvers());
+    /** @type {(url: string) => Promise<void>} */
+    const onListening = async url => {
+      await page.goto(url);
+      resolve();
+    }
 
-    const rejection = rejects(encrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
+    const rejection = rejects(encrypt({ inFile: envFile, getPrfOptions: { onListening } }), { name: 'InputError', message: 'Unable to get passkey.' });
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
     await rejection;
@@ -122,9 +119,8 @@ suite('encrypt', () => {
 
 suite('decrypt', () => {
   test('does nothing to empty .env file', async (t) => {
-    const { page } = await setupPlaywright(t);
+    await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
-    mockOpen(t, page);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await fileEqual(envFile, '');
@@ -132,9 +128,7 @@ suite('decrypt', () => {
     await fileEqual(envFile, '');
   });
   test('does nothing to empty .env file (with logs)', async (t) => {
-    const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
-    mockOpen(t, page);
     assertConsole(t, { debug: 1, info: 1, warn: 0, error: 0 });
 
     await fileEqual(envFile, '');
@@ -142,14 +136,12 @@ suite('decrypt', () => {
     await fileEqual(envFile, '');
   });
   test('does nothing when all variables are already decrypted', async (t) => {
-    const openMock = t.mock.method(BROWSER, 'open');
     const envFile = await setupEnv(t, STD_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
     await decrypt({ inFile: envFile });
 
     await fileEqual(envFile, STD_ENV);
-    deepStrictEqual(openMock.mock.calls.length, 0);
   });
   test("throws error when notEncryptedValue='error'", async (t) => {
     const envFile = await setupEnv(t, STD_ENV);
@@ -161,12 +153,17 @@ suite('decrypt', () => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const { page, setAutomaticSignIn } = await setupPlaywright(t);
     await setAutomaticSignIn(false);
-    const opened = mockOpen(t, page);
     const env = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
     const envFile = await setupEnv(t, env);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
+    const { promise: opened, resolve } = /** @type {PromiseWithResolvers<void>}*/(Promise.withResolvers());
+    /** @type {(url: string) => Promise<void>} */
+    const onListening = async url => {
+      await page.goto(url);
+      resolve();
+    }
 
-    const rejection = rejects(decrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
+    const rejection = rejects(decrypt({ inFile: envFile, getPrfOptions: { onListening } }), { name: 'InputError', message: 'Unable to get passkey.' });
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
     await rejection;

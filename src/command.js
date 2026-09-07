@@ -37,7 +37,7 @@ export async function encrypt(options = {}) {
     inFile = '.env',
     outFile = inFile,
     alreadyEncryptedValue = 'ignore',
-    getPrfOptions = { autoOpen: true, port: undefined },
+    getPrfOptions = { port: undefined },
     logger = {}
   } = options;
 
@@ -118,7 +118,7 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     outFile = inFile,
     injectInProcess = false,
     notEncryptedValue = 'ignore',
-    getPrfOptions = { autoOpen: true, port: undefined },
+    getPrfOptions = { port: undefined },
     logger = {}
   } = options;
 

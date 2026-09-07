@@ -7,7 +7,7 @@ import { deepStrictEqual, ok } from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 /** @import { Page } from 'playwright-core'; */
 
-import { getPrf, BROWSER } from '#src/getPrf.js';
+import { getPrf } from '#src/getPrf.js';
 /** @import { GetPrfResult } from '#src/getPrf.js'; */
 
 /**
@@ -66,7 +66,7 @@ export async function setupPlaywright(t, options = {}) {
  */
 export async function setupServer(t) {
   const controller = new AbortController();
-  const { url, prf } = await getPrf({ autoOpen: false, signal: controller.signal });
+  const { url, prf } = await getPrf({ onListening: null, signal: controller.signal });
   t.after(() => controller.abort());
   return { controller, url, prf };
 }
@@ -109,24 +109,6 @@ export async function setupFolder(t, env = '') {
 
   t.after(async () => { await rm(folder, { recursive: true, force: true }); })
   return { folder, envFile };
-}
-
-/**
- * Intercept the `open` function to open a Playwright browser to the page instead of the user's own browser.
- * @param {TestContext} t Test context to mock the `open` function for.
- * @param {Page} page Playwright `Page` to use to navigate to the URL instead of the user's browser.
- * @returns {Promise<void>} Promise which resolves when the Playwright browser has opened the page.
- */
-
-export function mockOpen(t, page) {
-  const { promise, resolve } = /** @type {PromiseWithResolvers<void>}*/(Promise.withResolvers());
-  /** @param {string} url */
-  const interceptor = async url => {
-    await page.goto(url);
-    resolve();
-  }
-  t.mock.method(BROWSER, 'open', interceptor);
-  return promise;
 }
 
 /**

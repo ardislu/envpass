@@ -15,12 +15,6 @@ async function getHTML() {
 }
 
 /**
- * Wrapper around browser operations. This wrapper object is required to mock the methods for
- * testing purposes.
- */
-export const BROWSER = { open };
-
-/**
  * Wrapper around server operations. This wrapper object is required to mock the methods for
  * testing purposes.
  */
@@ -34,8 +28,10 @@ export const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000;
 
 /**
  * @typedef {Object} GetPrfOptions
- * @property {boolean} [autoOpen] Automatically open a web browser to the passkey page. The default
- * value is `true`.
+ * @property {((url: string) => unknown)|null} [onListening] Function which will be called after the server is ready.
+ * The function is passed a URL on `localhost` to complete the passkey flow. The default value is
+ * {@link https://github.com/sindresorhus/open|`open`}, which will open the default web browser to the passkey page.
+ * To disable auto-opening, set this value to `null`. 
  * @property {number} [port] IP port number to use for the local server hosting the passkey page. By
  * default, defer to the operating system to assign a number.
  * @property {AbortSignal} [signal] `AbortSignal` which may be used to cancel this passkey flow.
@@ -63,7 +59,7 @@ export const WINDOW_EXPIRATION_DURATION = 2 * 60 * 1000;
  */
 export async function getPrf(options = {}) {
   const {
-    autoOpen = true,
+    onListening = open,
     port = undefined,
     signal = undefined
   } = options;
@@ -200,7 +196,7 @@ export async function getPrf(options = {}) {
     const { port } = /** @type {AddressInfo} */(server.address());
     const url = `http://localhost:${port}?challenge=${challenge}&exp=${timeoutExp}`;
     urlResolve(url);
-    if (autoOpen) { BROWSER.open(url); }
+    if (onListening !== null) { onListening(url); }
   });
 
   return {
