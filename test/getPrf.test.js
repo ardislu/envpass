@@ -181,14 +181,14 @@ suite('getPrf.js (server)', () => {
 
     deepStrictEqual((await fetch(url)).status, 200);
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
-    rejects(fetch(url), { name: 'TypeError', message: 'fetch failed' });
+    await rejects(fetch(url), { name: 'TypeError', message: 'fetch failed' });
   });
   test('abort works', async (t) => {
     const { url, controller } = await setupServer(t);
 
     deepStrictEqual((await fetch(url)).status, 200);
     controller.abort();
-    rejects(fetch(url), { name: 'TypeError', message: 'fetch failed' });
+    await rejects(fetch(url), { name: 'TypeError', message: 'fetch failed' });
   });
 });
 

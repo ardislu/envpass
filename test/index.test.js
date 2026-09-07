@@ -113,9 +113,10 @@ suite('encrypt', () => {
     const envFile = await setupEnv(t, STD_ENV);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
-    rejects(encrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
+    const rejection = rejects(encrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
+    await rejection;
   });
 });
 
@@ -165,9 +166,10 @@ suite('decrypt', () => {
     const envFile = await setupEnv(t, env);
     assertConsole(t, { debug: 0, info: 0, warn: 0, error: 0 });
 
-    rejects(decrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
+    const rejection = rejects(decrypt({ inFile: envFile }), { name: 'InputError', message: 'Unable to get passkey.' });
     await opened;
     t.mock.timers.tick(WINDOW_EXPIRATION_DURATION);
+    await rejection;
   });
   test('injects environment variables', async (t) => {
     const envFile = await setupEnv(t, INJECTED_ENV);
