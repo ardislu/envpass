@@ -103,13 +103,17 @@ export async function encrypt(options = {}) {
  * @property {GetPrfOptions} [getPrfOptions] Options for the passkey page and server.
  * @property {Logger} [logger] Logger to use to record diagnostic information. The default value is `{}` (i.e.,
  * drop all logs).
+ * @property {(command: string) => unknown} [exec] Function to call if there are additional arguments passed in the
+ * command after `decrypt`. The default value is
+ * {@link https://nodejs.org/api/child_process.html#child_processexecsynccommand-options|`childProcess.execSync`}
+ * with the option `{ stdio: 'inherit' }`.
  */
 
 /**
  * Decrypt an envpass encrypted .env file using a passkey.
  * @param {DecryptOptions} [options] Options to configure the decryption.
- * @param {{ args?: Array<string> }} [command] Excess arguments passed to the command, which will be executed as
- * a child process after decryption.
+ * @param {{ args?: Array<string> }} [command] Excess arguments passed to the command, which will be passed on
+ * to the `exec` function.
  * @returns {Promise<void>} `Promise` resolving when the decryption is complete.
  */
 export async function decrypt(options = {}, { args = [] } = {}) {
@@ -119,7 +123,8 @@ export async function decrypt(options = {}, { args = [] } = {}) {
     injectInProcess = false,
     notEncryptedValue = 'ignore',
     getPrfOptions = { port: undefined },
-    logger = {}
+    logger = {},
+    exec = command => childProcess.execSync(command, { stdio: 'inherit' })
   } = options;
 
   const env = /** @type {Record<string, string>} */ (
@@ -174,6 +179,6 @@ export async function decrypt(options = {}, { args = [] } = {}) {
   }
   if (args.length > 0) {
     logger.debug?.('Follow-on command found, executing in child process.');
-    childProcess.execSync(args.join(' '), { stdio: 'inherit' });
+    exec(args.join(' '));
   }
 }

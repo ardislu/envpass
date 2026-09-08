@@ -165,19 +165,19 @@ suite('decrypt', () => {
     logger.assertCounts({ debug: 3, info: 0, warn: 0, error: 0 });
   });
   test('passes through excess args to execute', async (t) => {
-    const execMock = t.mock.method(childProcess, 'execSync', () => { });
     const envFile = await setupEnv(t, STD_ENV);
+    /** @type {(command: string) => void} */
+    const exec = command => deepStrictEqual(command, 'test test test');
 
-    await decrypt({ inFile: envFile }, { args: ['test', 'test', 'test'] });
-    deepStrictEqual(execMock.mock.calls.length, 1);
+    await decrypt({ inFile: envFile, exec }, { args: ['test', 'test', 'test'] });
   });
   test('passes through excess args to execute (with logs)', async (t) => {
-    const execMock = t.mock.method(childProcess, 'execSync', () => { });
     const envFile = await setupEnv(t, STD_ENV);
+    /** @type {(command: string) => void} */
+    const exec = command => deepStrictEqual(command, 'test test test');
     const logger = new MockLogger();
 
-    await decrypt({ inFile: envFile, logger }, { args: ['test', 'test', 'test'] });
-    deepStrictEqual(execMock.mock.calls.length, 1);
+    await decrypt({ inFile: envFile, exec, logger }, { args: ['test', 'test', 'test'] });
     logger.assertCounts({ debug: 4, info: 0, warn: 0, error: 0 });
   });
 });
