@@ -190,7 +190,7 @@ suite('getPrf.js (server)', () => {
   });
 });
 
-suite('getPrf.html (client)', () => {
+suite('getPrf.html (client)', { concurrency: true }, () => {
   test('basic page and styles are present', async (t) => {
     const { setAutomaticSignIn, page } = await setupPlaywright(t);
     const { url } = await setupServer(t);

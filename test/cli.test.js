@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from 'node:assert/strict';
 
 import { makeProgram } from '#src/cli.js';
 
-suite('cli', () => {
+suite('cli', { concurrency: true }, () => {
   test('envpass encrypt works', (t) => {
     const program = makeProgram(t.mock.fn(), t.mock.fn());
     program.parse('node envpass encrypt'.split(' '));

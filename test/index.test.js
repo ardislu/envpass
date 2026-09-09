@@ -13,7 +13,7 @@ const ENCRYPTED_ENV = 'A=envpass:v1:AAA\nB=envpass:v1:BBB\nC=envpass:v1:CCC\n';
 /** Single .env value for injection tests. */
 const INJECTED_ENV = 'INJECTION_TEST=INJECTED';
 
-suite('e2e', () => {
+suite('e2e', { concurrency: true }, () => {
   test('encrypt and decrypt .env', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, STD_ENV);
@@ -40,7 +40,7 @@ suite('e2e', () => {
   });
 });
 
-suite('encrypt', () => {
+suite('encrypt', { concurrency: true }, () => {
   test('does nothing to empty .env file', async (t) => {
     const { page } = await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
@@ -98,7 +98,7 @@ suite('encrypt', () => {
   });
 });
 
-suite('decrypt', () => {
+suite('decrypt', { concurrency: true }, () => {
   test('does nothing to empty .env file', async (t) => {
     await setupPlaywright(t);
     const envFile = await setupEnv(t, '');
