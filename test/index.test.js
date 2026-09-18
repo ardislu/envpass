@@ -1,6 +1,5 @@
 import { suite, test } from 'node:test';
 import { deepStrictEqual, rejects } from 'node:assert';
-import childProcess from 'node:child_process';
 
 import { encrypt, decrypt } from '#src/index.js';
 import { WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
