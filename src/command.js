@@ -166,6 +166,9 @@ export async function decrypt(options = {}, { args = [] } = {}) {
   logger.debug?.('All environment variables handled.');
 
   if (injectInProcess) {
+    if (outFile && outFile !== inFile) {
+      logger.debug?.('Both injectInProcess and outFile arguments were provided, ignoring outFile.');
+    }
     for (const [envVar, value] of Object.entries(decryptedEnv)) {
       process.env[envVar] = value;
     }

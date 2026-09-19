@@ -1,5 +1,6 @@
 import { suite, test } from 'node:test';
-import { deepStrictEqual, rejects } from 'node:assert';
+import { deepStrictEqual, rejects, ok } from 'node:assert';
+import { existsSync } from 'node:fs';
 
 import { encrypt, decrypt } from '#src/index.js';
 import { WINDOW_EXPIRATION_DURATION } from '#src/getPrf.js';
@@ -162,6 +163,30 @@ suite('decrypt', { concurrency: true }, () => {
     deepStrictEqual(process.env.INJECTION_TEST, 'INJECTED');
     delete process.env.INJECTION_TEST;
     logger.assertCounts({ debug: 3, info: 0, warn: 0, error: 0 });
+  });
+  test('ignores outFile when injectInProcess is set', async (t) => {
+    const envFile = await setupEnv(t, INJECTED_ENV);
+    const outFile =  `${envFile}_TEST_OUT.tmp`;
+
+    ok(!existsSync(outFile));
+    deepStrictEqual(process.env.INJECTION_TEST, undefined);
+    await decrypt({ inFile: envFile, injectInProcess: true, outFile });
+    ok(!existsSync(outFile));
+    deepStrictEqual(process.env.INJECTION_TEST, 'INJECTED');
+    delete process.env.INJECTION_TEST;
+  });
+  test('ignores outFile when injectInProcess is set (with logs)', async (t) => {
+    const envFile = await setupEnv(t, INJECTED_ENV);
+    const outFile =  `${envFile}_TEST_OUT.tmp`;
+    const logger = new MockLogger();
+
+    ok(!existsSync(outFile));
+    deepStrictEqual(process.env.INJECTION_TEST, undefined);
+    await decrypt({ inFile: envFile, injectInProcess: true, outFile, logger });
+    ok(!existsSync(outFile));
+    deepStrictEqual(process.env.INJECTION_TEST, 'INJECTED');
+    delete process.env.INJECTION_TEST;
+    logger.assertCounts({ debug: 4, info: 0, warn: 0, error: 0 });
   });
   test('passes through excess args to execute', async (t) => {
     const envFile = await setupEnv(t, STD_ENV);
