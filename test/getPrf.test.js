@@ -57,12 +57,12 @@ function makePostRequest(url, options = {}) {
 suite('getPrf.js (server)', () => {
   test('validates <style> tag is present in HTML template', async (t) => {
     const html = await getHTMLFromFile();
-    const modified = html.replaceAll('<style>', '');
+    const modified = html.replaceAll(/<style[^>]*>[\s\S]*?<\/style>/ig, '');
     await rejects(setupServer(t, { getHTML: () => modified }), { message: 'Could not find <style> tag in getPrf.html file.' });
   });
   test('validates <script> tag is present in HTML template', async (t) => {
     const html = await getHTMLFromFile();
-    const modified = html.replaceAll('<script type="module">', '');
+    const modified = html.replaceAll(/<script[^>]*>[\s\S]*?<\/script>/ig, '');
     await rejects(setupServer(t, { getHTML: () => modified }), { message: 'Could not find <script> tag in getPrf.html file.' });
   });
   test('valid GET works', async (t) => {
