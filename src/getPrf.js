@@ -76,10 +76,10 @@ export async function getPrf(options = {}) {
   const style = html.match(/<style.*>([\s\S]*)<\/style>/i)?.[1];
   const script = html.match(/<script.*>([\s\S]*)<\/script>/i)?.[1];
   if (style === undefined) {
-    throw new Error('Could not find <style> tag in getPrf.html file.');
+    throw new Error('Could not find <style> tag in HTML template file.');
   }
   if (script === undefined) {
-    throw new Error('Could not find <script> tag in getPrf.html file.');
+    throw new Error('Could not find <script> tag in HTML template file.');
   }
   const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
   const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(script))).toBase64();
