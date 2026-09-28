@@ -69,9 +69,8 @@ export async function getPrf(options = {}) {
   const { promise: prfPromise, resolve: prfResolve } = /** @type {PromiseWithResolvers<Bytes32>}*/(Promise.withResolvers());
   const { promise: abortPromise, resolve: abortResolve } = /** @type {PromiseWithResolvers<null>}*/(Promise.withResolvers());
 
-  const html = await getHTML();
-
-  // Generate hashes of <style> and <script> contents for the CSP header
+  // Fetch and validate HTML template
+  let html = await getHTML();
   const encoder = new TextEncoder();
   const style = html.match(/<style.*>([\s\S]*)<\/style>/i)?.[1];
   const script = html.match(/<script.*>([\s\S]*)<\/script>/i)?.[1];
@@ -81,8 +80,6 @@ export async function getPrf(options = {}) {
   if (script === undefined) {
     throw new Error('Could not find <script> tag in HTML template file.');
   }
-  const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
-  const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(script))).toBase64();
 
   // Setup local HTTP server
   const server = http.createServer();
@@ -102,6 +99,15 @@ export async function getPrf(options = {}) {
 
   // Challenge is used to verify the client POST-ing to the server was instantiated from this code
   const challenge = crypto.getRandomValues(new Uint8Array(32)).toHex();
+
+  // Setup injection in the HTML template, including hashes of <style> and <script> contents for the CSP header
+  const injectedScript = `
+    const envpass = {
+      exp: ${timeoutExp}
+    }; ${script}`;
+  const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
+  const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(injectedScript))).toBase64();
+  html = html.replace(/(<script.*)>[\s\S]*<\/script>/i, `$1 integrity="sha512-${scriptHash}">${injectedScript}</script>`);
 
   server.on('request', (request, response) => {
     const { port } = /** @type {AddressInfo} */(server.address());
@@ -192,7 +198,7 @@ export async function getPrf(options = {}) {
   server.listen(port, 'localhost');
   server.on('listening', () => {
     const { port } = /** @type {AddressInfo} */(server.address());
-    const url = `http://localhost:${port}?challenge=${challenge}&exp=${timeoutExp}`;
+    const url = `http://localhost:${port}?challenge=${challenge}`;
     urlResolve(url);
     if (onListening !== null) { onListening(url); }
   });
