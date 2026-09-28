@@ -84,6 +84,7 @@ export async function getPrf(options = {}) {
   const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
   const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(script))).toBase64();
 
+  // Setup local HTTP server
   const server = http.createServer();
   server.keepAliveTimeout = 0;
   server.maxRequestsPerSocket = 1;

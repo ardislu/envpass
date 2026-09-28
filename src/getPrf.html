@@ -111,7 +111,7 @@
     document.querySelector('button').addEventListener('click', async e => {
       e.preventDefault();
       controller.abort('New request initiated');
-      await broadcastPromise.catch(() => {}); // Error is expected after aborting
+      await broadcastPromise.catch(() => { }); // Error is expected after aborting
       controller = new AbortController();
       broadcastPromise = broadcastPrf(controller);
     });
