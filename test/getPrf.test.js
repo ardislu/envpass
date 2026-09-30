@@ -307,6 +307,7 @@ suite('getPrf.html (client)', { concurrency: true }, () => {
     await page.clock.install();
     await page.goto(url);
 
+    await page.clock.runFor(250); // 1Password browser extension workaround
     match(await page.locator('p').textContent() ?? '', /^Successfully sent passkey/);
     await page.clock.runFor(WINDOW_EXPIRATION_DURATION);
     match(await page.locator('p').textContent() ?? '', /^Successfully sent passkey/);
