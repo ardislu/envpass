@@ -101,10 +101,10 @@ export async function getPrf(options = {}) {
   const challenge = crypto.getRandomValues(new Uint8Array(32)).toHex();
 
   // Setup injection in the HTML template, including hashes of <style> and <script> contents for the CSP header
-  const injectedScript = `
-    const envpass = {
-      exp: ${timeoutExp}
-    }; ${script}`;
+  const envpass = {
+    exp: timeoutExp
+  }
+  const injectedScript = `const envpass = ${JSON.stringify(envpass)}; ${script}`;
   const styleHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(style))).toBase64();
   const scriptHash = new Uint8Array(await crypto.subtle.digest('SHA-512', encoder.encode(injectedScript))).toBase64();
   html = html.replace(/(<script.*)>[\s\S]*<\/script>/i, `$1 integrity="sha512-${scriptHash}">${injectedScript}</script>`);
